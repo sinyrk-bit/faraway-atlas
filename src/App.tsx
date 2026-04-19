@@ -1,8 +1,9 @@
-import { startTransition, useEffect, useState } from 'react'
+import { startTransition, useCallback, useEffect, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import './App.css'
 import { CardFace } from './components/CardFace'
 import { PlayerRow } from './components/PlayerRow'
+import { AtlasAudioEngine } from './game/audio'
 import { difficultyMeta, modeMeta } from './game/content'
 import {
   PROFILE_KEY,
@@ -35,6 +36,14 @@ import type {
   PersistedProfile,
   PlayerState,
 } from './game/types'
+
+type MatchSnapshot = {
+  phase: MatchState['phase']
+  round: number
+  draftIndex: number
+  revealCount: number
+  activeHumanPlayerId?: string
+}
 
 function readInviteProfilePatch() {
   if (typeof window === 'undefined') {
@@ -162,10 +171,10 @@ function SegmentButton<T extends string>({
 function RevealSummary({ match }: { match: MatchState }) {
   return (
     <div className="reveal-grid">
-      {match.revealEntries.map((entry) => {
+      {match.revealEntries.map((entry, index) => {
         const player = match.players.find((candidate) => candidate.id === entry.playerId)
         return (
-          <article className="reveal-card" key={entry.playerId}>
+          <article className="reveal-card" key={entry.playerId} style={{ '--reveal-index': index } as CSSProperties}>
             <div>
               <span>{player?.name}</span>
               <strong>{entry.card.title}</strong>
@@ -256,10 +265,20 @@ function App() {
   const [rulesOpen, setRulesOpen] = useState(false)
   const [focusedStandingEntry, setFocusedStandingEntry] = useState(0)
   const [inviteStatus, setInviteStatus] = useState('')
+  const [audioEngine] = useState(() => new AtlasAudioEngine())
+  const previousMatchRef = useRef<MatchSnapshot | null>(null)
+
+  const playSound = useCallback((cue: 'tap' | 'select' | 'lock' | 'turn' | 'reveal' | 'draft' | 'victory') => {
+    void audioEngine.play(cue)
+  }, [audioEngine])
 
   useEffect(() => {
     updateProfile(profile)
   }, [profile])
+
+  useEffect(() => {
+    audioEngine.setEnabled(profile.soundEnabled)
+  }, [audioEngine, profile.soundEnabled])
 
   useEffect(() => {
     if (!match || match.phase !== 'draft') {
@@ -278,7 +297,7 @@ function App() {
     }, 700)
 
     return () => window.clearTimeout(timer)
-  }, [match])
+  }, [match, playSound])
 
   useEffect(() => {
     if (!match || match.phase !== 'finished') {
@@ -290,7 +309,48 @@ function App() {
     }, 1400)
 
     return () => window.clearInterval(timer)
-  }, [match])
+  }, [match, playSound])
+
+  useEffect(() => {
+    if (!match) {
+      previousMatchRef.current = null
+      return
+    }
+
+    const currentSnapshot: MatchSnapshot = {
+      phase: match.phase,
+      round: match.round,
+      draftIndex: match.draftIndex,
+      revealCount: match.revealEntries.length,
+      activeHumanPlayerId: match.activeHumanPlayerId,
+    }
+    const previousSnapshot = previousMatchRef.current
+
+    if (previousSnapshot) {
+      if (previousSnapshot.phase !== match.phase) {
+        if (match.phase === 'reveal') {
+          playSound('reveal')
+        } else if (match.phase === 'draft') {
+          playSound('turn')
+        } else if (match.phase === 'finished') {
+          playSound('victory')
+        } else if (match.phase === 'choose-region' || match.phase === 'opening-hand') {
+          playSound('turn')
+        }
+      } else if (previousSnapshot.draftIndex !== match.draftIndex) {
+        playSound('draft')
+      } else if (
+        previousSnapshot.activeHumanPlayerId !== match.activeHumanPlayerId &&
+        (match.phase === 'opening-hand' || match.phase === 'choose-region')
+      ) {
+        playSound('turn')
+      } else if (previousSnapshot.revealCount !== match.revealEntries.length && match.phase === 'reveal') {
+        playSound('reveal')
+      }
+    }
+
+    previousMatchRef.current = currentSnapshot
+  }, [match, playSound])
 
   const human = match ? getHumanPlayer(match) : undefined
   const activeHuman = match ? getActiveHumanPlayer(match) : undefined
@@ -329,6 +389,7 @@ function App() {
       seed: (profile.preferredSeed || todaySeed).trim() || todaySeed,
     }
 
+    playSound('lock')
     startTransition(() => {
       setMatch(createMatch(config))
       setFocusedStandingEntry(0)
@@ -342,6 +403,7 @@ function App() {
     }
 
     await navigator.clipboard.writeText(inviteUrl)
+    playSound('tap')
     setInviteStatus('Invite link copied.')
     window.setTimeout(() => setInviteStatus(''), 1800)
   }
@@ -382,6 +444,7 @@ function App() {
               <button
                 className="ghost-button"
                 onClick={() => {
+                  playSound('tap')
                   patchProfile({ preferredSeed: todaySeed })
                   startMatch('starfall')
                 }}
@@ -405,7 +468,10 @@ function App() {
                     active={profile.preferredMode === mode}
                     key={mode}
                     mode={mode}
-                    onSelect={(value) => patchProfile({ preferredMode: value })}
+                    onSelect={(value) => {
+                      playSound('tap')
+                      patchProfile({ preferredMode: value })
+                    }}
                   />
                 ))}
               </div>
@@ -438,10 +504,13 @@ function App() {
                       current={String(profile.preferredTotalPlayers)}
                       key={count}
                       onClick={(value) =>
-                        patchProfile({
-                          preferredTotalPlayers: Number(value),
-                          preferredHumanCount: Math.min(profile.preferredHumanCount, Number(value)),
-                        })
+                        {
+                          playSound('tap')
+                          patchProfile({
+                            preferredTotalPlayers: Number(value),
+                            preferredHumanCount: Math.min(profile.preferredHumanCount, Number(value)),
+                          })
+                        }
                       }
                       value={String(count)}
                     >
@@ -458,7 +527,10 @@ function App() {
                     <SegmentButton
                       current={String(profile.preferredHumanCount)}
                       key={count}
-                      onClick={(value) => patchProfile({ preferredHumanCount: Number(value) })}
+                      onClick={(value) => {
+                        playSound('tap')
+                        patchProfile({ preferredHumanCount: Number(value) })
+                      }}
                       value={String(count)}
                     >
                       {count}
@@ -478,7 +550,10 @@ function App() {
                     <SegmentButton
                       current={profile.preferredDifficulty}
                       key={difficulty}
-                      onClick={(value) => patchProfile({ preferredDifficulty: value })}
+                      onClick={(value) => {
+                        playSound('tap')
+                        patchProfile({ preferredDifficulty: value })
+                      }}
                       value={difficulty}
                     >
                       {difficultyMeta[difficulty].label}
@@ -501,6 +576,19 @@ function App() {
               <article>
                 <span>Mode</span>
                 <strong>{modeMeta[profile.preferredMode].title}</strong>
+              </article>
+              <article>
+                <span>Sound</span>
+                <button
+                  className="inline-toggle"
+                  onClick={() => {
+                    playSound('tap')
+                    patchProfile({ soundEnabled: !profile.soundEnabled })
+                  }}
+                  type="button"
+                >
+                  {profile.soundEnabled ? 'On' : 'Off'}
+                </button>
               </article>
             </div>
           </div>
@@ -525,8 +613,25 @@ function App() {
             <span>Phase</span>
             <strong>{activeMatch.phase.replace('-', ' ')}</strong>
           </div>
-          <button className="ghost-button" onClick={() => setRulesOpen((value) => !value)} type="button">
+          <button
+            className="ghost-button"
+            onClick={() => {
+              playSound('tap')
+              setRulesOpen((value) => !value)
+            }}
+            type="button"
+          >
             {rulesOpen ? 'Hide Rules' : 'Show Rules'}
+          </button>
+          <button
+            className="ghost-button"
+            onClick={() => {
+              playSound('tap')
+              patchProfile({ soundEnabled: !profile.soundEnabled })
+            }}
+            type="button"
+          >
+            Sound {profile.soundEnabled ? 'On' : 'Off'}
           </button>
           <button
             className="ghost-button"
@@ -551,19 +656,23 @@ function App() {
 
   function renderOpeningSelection(activeMatch: MatchState, activeHumanPlayer: PlayerState) {
     return (
-      <section className="phase-panel">
+      <section className="phase-panel phase-panel-opening" key={`opening-${activeMatch.round}-${activeHumanPlayer.id}`}>
         <div className="phase-copy">
           <span className="phase-tag">Opening Draft</span>
           <h2>{activeHumanPlayer.name}, keep three of your five opening regions.</h2>
           <p>Advanced mode front-loads the puzzle. Pass the device after locking the current seat if multiple friends are playing locally.</p>
         </div>
+        <div className="seat-banner">Handing control to {activeHumanPlayer.name}</div>
         <div className="card-grid">
           {activeHumanPlayer.hand.map((card) => (
             <CardFace
               card={card}
               compact
               key={card.id}
-              onClick={() => setMatch((current) => (current ? selectOpeningRegion(current, card.id) : current))}
+              onClick={() => {
+                playSound('select')
+                setMatch((current) => (current ? selectOpeningRegion(current, card.id) : current))
+              }}
               selectable
               selected={activeMatch.openingSelectionIds.includes(card.id)}
             />
@@ -572,7 +681,10 @@ function App() {
         <button
           className="primary-button"
           disabled={!activeMatch.openingReady}
-          onClick={() => setMatch((current) => (current ? confirmOpeningSelection(current) : current))}
+          onClick={() => {
+            playSound('lock')
+            setMatch((current) => (current ? confirmOpeningSelection(current) : current))
+          }}
           type="button"
         >
           Lock Opening Hand
@@ -583,19 +695,23 @@ function App() {
 
   function renderChooseRegion(activeMatch: MatchState, activeHumanPlayer: PlayerState) {
     return (
-      <section className="phase-panel">
+      <section className="phase-panel phase-panel-choose" key={`choose-${activeMatch.round}-${activeHumanPlayer.id}`}>
         <div className="phase-copy">
           <span className="phase-tag">Choose Region</span>
           <h2>{activeHumanPlayer.name}, plot your next step.</h2>
           <p>Lower duration means earlier draft priority. Higher duration can unlock sanctuaries if you outpace your previous card.</p>
         </div>
+        <div className="seat-banner">Active seat: {activeHumanPlayer.name}</div>
         <div className="card-grid">
           {activeHumanPlayer.hand.map((card) => (
             <CardFace
               card={card}
               compact
               key={card.id}
-              onClick={() => setMatch((current) => (current ? selectRegionToPlay(current, card.id) : current))}
+              onClick={() => {
+                playSound('select')
+                setMatch((current) => (current ? selectRegionToPlay(current, card.id) : current))
+              }}
               selectable
               selected={activeMatch.selectedRegionId === card.id}
             />
@@ -605,7 +721,10 @@ function App() {
           <button
             className="primary-button"
             disabled={!activeMatch.selectedRegionId}
-            onClick={() => setMatch((current) => (current ? confirmRegionChoice(current) : current))}
+            onClick={() => {
+              playSound('lock')
+              setMatch((current) => (current ? confirmRegionChoice(current) : current))
+            }}
             type="button"
           >
             Lock Seat Choice
@@ -623,14 +742,21 @@ function App() {
 
   function renderReveal(activeMatch: MatchState) {
     return (
-      <section className="phase-panel">
+      <section className="phase-panel phase-panel-reveal" key={`reveal-${activeMatch.round}`}>
         <div className="phase-copy">
           <span className="phase-tag">Reveal</span>
           <h2>The table resolves in tempo order.</h2>
           <p>Fast routes draft first. Sanctuary checks happen before the market draft and can reshape the entire round.</p>
         </div>
         <RevealSummary match={activeMatch} />
-        <button className="primary-button" onClick={() => setMatch((current) => (current ? beginDraftPhase(current) : current))} type="button">
+        <button
+          className="primary-button"
+          onClick={() => {
+            playSound('lock')
+            setMatch((current) => (current ? beginDraftPhase(current) : current))
+          }}
+          type="button"
+        >
           Continue To Draft
         </button>
       </section>
@@ -641,7 +767,7 @@ function App() {
     const isHumanTurn = currentPlayer?.id === activeHumanPlayer.id
 
     return (
-      <section className="phase-panel phase-draft">
+      <section className="phase-panel phase-draft" key={`draft-${activeMatch.round}-${currentPlayer?.id ?? 'none'}-${activeMatch.draftIndex}`}>
         <div className="phase-copy">
           <span className="phase-tag">Draft</span>
           <h2>{isHumanTurn ? `${activeHumanPlayer.name}, it is your turn to draft.` : `${currentPlayer?.name} is drafting.`}</h2>
@@ -665,7 +791,10 @@ function App() {
                   key={card.id}
                   onClick={
                     isHumanTurn
-                      ? () => updateHumanDraft({ regionId: card.id })
+                      ? () => {
+                          playSound('select')
+                          updateHumanDraft({ regionId: card.id })
+                        }
                       : undefined
                   }
                   selectable={isHumanTurn && activeMatch.round < activeMatch.maxRounds}
@@ -688,7 +817,14 @@ function App() {
                   card={card}
                   compact
                   key={card.id}
-                  onClick={isHumanTurn ? () => updateHumanDraft({ sanctuaryId: card.id }) : undefined}
+                  onClick={
+                    isHumanTurn
+                      ? () => {
+                          playSound('select')
+                          updateHumanDraft({ sanctuaryId: card.id })
+                        }
+                      : undefined
+                  }
                   selectable={isHumanTurn}
                   selected={humanDraftSelection.sanctuaryId === card.id}
                 />
@@ -701,7 +837,10 @@ function App() {
           <button
             className="primary-button"
             disabled={!humanDraftCanConfirm(activeMatch)}
-            onClick={() => setMatch((current) => (current ? confirmHumanDraft(current) : current))}
+            onClick={() => {
+              playSound('lock')
+              setMatch((current) => (current ? confirmHumanDraft(current) : current))
+            }}
             type="button"
           >
             Confirm Draft
@@ -715,7 +854,7 @@ function App() {
 
   function renderFinished(activeMatch: MatchState) {
     return (
-      <section className="phase-panel phase-finished">
+      <section className="phase-panel phase-finished" key={`finished-${activeMatch.round}`}>
         <div className="phase-copy">
           <span className="phase-tag">Final Fame</span>
           <h2>{standings[0]?.playerName} leads the atlas.</h2>
@@ -730,6 +869,7 @@ function App() {
           <button
             className="primary-button"
             onClick={() => {
+              playSound('lock')
               syncFinishedStats(activeMatch)
               startMatch(activeMatch.config.mode)
             }}
@@ -740,6 +880,7 @@ function App() {
           <button
             className="ghost-button"
             onClick={() => {
+              playSound('tap')
               syncFinishedStats(activeMatch)
               setMatch(null)
             }}
@@ -757,7 +898,7 @@ function App() {
   }
 
   return (
-    <main className="screen screen-game">
+    <main className="screen screen-game" data-phase={match.phase}>
       <div className="aurora aurora-a" />
       <div className="aurora aurora-b" />
       {renderTopBar(match)}
@@ -776,7 +917,7 @@ function App() {
               <PlayerRow
                 active={currentPlayer?.id === player.id && match.phase === 'draft'}
                 echoDigits={getPlayerDigitEchoes(player, match.config.mode)}
-                human={player.id === human.id}
+                human={player.kind === 'human'}
                 key={player.id}
                 player={player}
               />
@@ -795,6 +936,7 @@ function App() {
                   key={card.id}
                   onClick={() => {
                     if (match.phase === 'draft' && currentPlayer?.kind === 'human') {
+                      playSound('select')
                       updateHumanDraft({ regionId: card.id })
                     }
                   }}

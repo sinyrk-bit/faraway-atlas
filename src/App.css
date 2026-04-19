@@ -356,6 +356,7 @@
   gap: 0.7rem;
   min-height: 0;
   overflow: hidden;
+  animation: panelLift 320ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .phase-copy h2,
@@ -376,6 +377,22 @@
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.05);
   display: grid;
+}
+
+.seat-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: fit-content;
+  padding: 0.42rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(116, 217, 255, 0.12);
+  border: 1px solid rgba(116, 217, 255, 0.22);
+  color: rgba(227, 246, 255, 0.92);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  animation: chipSweep 360ms ease;
 }
 
 .card-grid {
@@ -404,6 +421,7 @@
   display: grid;
   gap: 0.55rem;
   transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
+  transform-origin: center bottom;
 }
 
 .card-face.is-compact {
@@ -420,6 +438,7 @@
 .card-face.is-highlighted {
   border-color: color-mix(in srgb, var(--card-accent) 78%, white);
   box-shadow: 0 18px 42px color-mix(in srgb, var(--card-accent) 16%, transparent);
+  animation: selectedPop 280ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .card-face.is-echoing::after {
@@ -463,6 +482,15 @@
   min-height: 3.5rem;
 }
 
+.card-face.is-selectable .card-art-image {
+  transition: transform 220ms ease, filter 220ms ease;
+}
+
+.card-face.is-selectable:hover .card-art-image {
+  transform: scale(1.05);
+  filter: saturate(1.08);
+}
+
 .card-art-image {
   display: block;
   width: 100%;
@@ -481,6 +509,7 @@
   font-size: 0.58rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  animation: meteorFlash 1.8s ease-in-out infinite;
 }
 
 .card-topline,
@@ -645,6 +674,7 @@
 
 .player-row.is-active {
   border-color: rgba(116, 217, 255, 0.48);
+  animation: activeSeatPulse 1.9s ease-in-out infinite;
 }
 
 .player-row-header,
@@ -720,10 +750,12 @@
 
 .route-slot.is-latest {
   border-color: rgba(117, 221, 255, 0.55);
+  animation: latestRouteBloom 680ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .route-slot.is-echoing {
   box-shadow: inset 0 0 0 1px rgba(255, 221, 112, 0.45);
+  animation: echoSpark 2.2s ease-in-out infinite;
 }
 
 .route-slot-top,
@@ -813,6 +845,7 @@
   display: flex;
   justify-content: space-between;
   gap: 1rem;
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
 }
 
 .market-mini strong {
@@ -862,6 +895,10 @@
 .reveal-card {
   display: grid;
   gap: 0.45rem;
+  opacity: 0;
+  transform: translateY(14px) scale(0.98);
+  animation: revealCascade 420ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(var(--reveal-index, 0) * 70ms);
 }
 
 .reveal-card strong,
@@ -892,6 +929,7 @@
   border-radius: 24px;
   display: grid;
   gap: 0.55rem;
+  animation: panelLift 420ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .standing-panel.is-winner {
@@ -929,12 +967,104 @@
   transform: translateX(3px);
 }
 
+.inline-toggle {
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+}
+
 @keyframes drift {
   from {
     transform: translate3d(0, 0, 0) scale(1);
   }
   to {
     transform: translate3d(2rem, 1rem, 0) scale(1.12);
+  }
+}
+
+@keyframes panelLift {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes chipSweep {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes selectedPop {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  55% {
+    transform: translateY(-4px) scale(1.02);
+  }
+  100% {
+    transform: translateY(-2px) scale(1.01);
+  }
+}
+
+@keyframes activeSeatPulse {
+  0%,
+  100% {
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.24);
+  }
+  50% {
+    box-shadow: 0 24px 54px rgba(109, 170, 255, 0.24);
+  }
+}
+
+@keyframes latestRouteBloom {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes echoSpark {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 1px rgba(255, 221, 112, 0.28);
+  }
+  50% {
+    box-shadow: inset 0 0 0 1px rgba(255, 221, 112, 0.65), 0 0 18px rgba(255, 214, 94, 0.12);
+  }
+}
+
+@keyframes revealCascade {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes meteorFlash {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-1px);
+    opacity: 1;
   }
 }
 
@@ -986,5 +1116,16 @@
 
   .route-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

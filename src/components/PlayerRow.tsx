@@ -39,7 +39,7 @@ export function PlayerRow({ player, active = false, human = false, scoreLabel, e
         <div className="player-id-block">
           <img alt={`${player.name} avatar`} className="player-avatar" src={avatar} />
           <div>
-            <span className="player-role">{human ? 'You' : 'Rival'}</span>
+            <span className="player-role">{human ? 'Seat' : 'Rival'}</span>
             <h2>{player.name}</h2>
           </div>
         </div>

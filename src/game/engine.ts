@@ -1008,6 +1008,7 @@ export function defaultProfile() {
     preferredTotalPlayers: 3,
     preferredAiCount: 2,
     preferredSeed: '',
+    soundEnabled: true,
     lastBestScore: 0,
     lastWinner: '',
   }

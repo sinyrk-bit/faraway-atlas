@@ -221,6 +221,7 @@ export interface PersistedProfile {
   preferredTotalPlayers: number
   preferredAiCount: number
   preferredSeed: string
+  soundEnabled: boolean
   lastBestScore: number
   lastWinner: string
 }
