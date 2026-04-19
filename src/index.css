@@ -1,0 +1,46 @@
+:root {
+  font-family: 'Sora', 'Segoe UI', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #f7f8ff;
+  background:
+    radial-gradient(circle at top, rgba(66, 122, 215, 0.22), transparent 40%),
+    radial-gradient(circle at bottom, rgba(255, 184, 98, 0.18), transparent 36%),
+    #060913;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(116, 217, 255, 0.16), transparent 25%),
+    radial-gradient(circle at 85% 85%, rgba(255, 192, 98, 0.14), transparent 20%),
+    linear-gradient(180deg, #050812, #090d1b 48%, #070a14);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+}
