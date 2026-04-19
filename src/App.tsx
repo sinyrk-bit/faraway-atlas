@@ -246,6 +246,13 @@ function App() {
   const selectedHandCard = human?.hand.find((card) => card.id === match?.selectedRegionId)
   const humanDraftSelection = match?.humanDraftSelection ?? {}
   const dailySummary = standingsSummary(standings)
+  const playerGridColumns = match
+    ? match.players.length <= 2
+      ? '1fr'
+      : match.players.length <= 4
+        ? 'repeat(2, minmax(0, 1fr))'
+        : 'repeat(3, minmax(0, 1fr))'
+    : '1fr'
 
   function patchProfile(patch: Partial<PersistedProfile>) {
     setProfile((current) => ({
@@ -259,7 +266,7 @@ function App() {
     const config: MatchConfig = {
       mode,
       playerName: profile.playerName || 'Explorer',
-      aiCount: Math.min(3, Math.max(1, profile.preferredAiCount)),
+      aiCount: Math.min(5, Math.max(1, profile.preferredAiCount)),
       difficulty: profile.preferredDifficulty,
       seed: (profile.preferredSeed || todaySeed).trim() || todaySeed,
     }
@@ -351,13 +358,13 @@ function App() {
               </label>
 
               <div className="field">
-                <span>AI Rivals</span>
+                <span>Total Players</span>
                 <div className="segment-row">
-                  {[1, 2, 3].map((count) => (
+                  {[2, 3, 4, 5, 6].map((count) => (
                     <SegmentButton
-                      current={String(profile.preferredAiCount)}
+                      current={String(profile.preferredAiCount + 1)}
                       key={count}
-                      onClick={(value) => patchProfile({ preferredAiCount: Number(value) })}
+                      onClick={(value) => patchProfile({ preferredAiCount: Math.max(1, Number(value) - 1) })}
                       value={String(count)}
                     >
                       {count}
@@ -440,6 +447,7 @@ function App() {
           {humanPlayer.hand.map((card) => (
             <CardFace
               card={card}
+              compact
               key={card.id}
               onClick={() => setMatch((current) => (current ? selectOpeningRegion(current, card.id) : current))}
               selectable
@@ -471,6 +479,7 @@ function App() {
           {humanPlayer.hand.map((card) => (
             <CardFace
               card={card}
+              compact
               key={card.id}
               onClick={() => setMatch((current) => (current ? selectRegionToPlay(current, card.id) : current))}
               selectable
@@ -648,7 +657,7 @@ function App() {
           {match.phase === 'draft' ? renderDraft(match, human) : null}
           {match.phase === 'finished' ? renderFinished(match) : null}
 
-          <section className="rivals-stack">
+          <section className="rivals-stack" style={{ gridTemplateColumns: playerGridColumns }}>
             {match.players.map((player) => (
               <PlayerRow
                 active={currentPlayer?.id === player.id && match.phase === 'draft'}
@@ -687,7 +696,7 @@ function App() {
           <div className="side-section">
             <span>Expedition Log</span>
             <div className="log-list">
-              {match.log.map((entry) => (
+              {match.log.slice(0, 5).map((entry) => (
                 <p key={entry}>{entry}</p>
               ))}
             </div>

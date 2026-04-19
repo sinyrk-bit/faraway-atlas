@@ -20,7 +20,7 @@ import type {
 export const HUMAN_PLAYER_ID = 'player-0'
 export const PROFILE_KEY = 'faraway-atlas-profile'
 
-const AI_NAMES = ['Lyra Vale', 'Oren Flint', 'Mira Sol', 'Khepri Moss']
+const AI_NAMES = ['Lyra Vale', 'Oren Flint', 'Mira Sol', 'Khepri Moss', 'Sable Rune', 'Tarin Voss']
 
 function zeroResources(): ResourceMap {
   return {
