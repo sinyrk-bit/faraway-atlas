@@ -1,0 +1,19 @@
+<svg width="320" height="180" viewBox="0 0 320 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="320" height="180" rx="28" fill="#091B17"/>
+  <circle cx="75" cy="75" r="32" fill="#7CE6A1"/>
+  <circle cx="116" cy="63" r="28" fill="#5AC47A"/>
+  <circle cx="149" cy="88" r="36" fill="#91F5B0"/>
+  <circle cx="202" cy="68" r="29" fill="#6DE091"/>
+  <circle cx="241" cy="86" r="38" fill="#4BB66D"/>
+  <path d="M54 125C64 99 90 92 104 122" stroke="#DCFDE8" stroke-width="11" stroke-linecap="round"/>
+  <path d="M128 136C138 103 163 97 178 131" stroke="#DCFDE8" stroke-width="11" stroke-linecap="round"/>
+  <path d="M222 137C231 104 261 97 277 132" stroke="#DCFDE8" stroke-width="11" stroke-linecap="round"/>
+  <circle cx="208" cy="38" r="20" fill="#D5FFE0" fill-opacity="0.9"/>
+  <path d="M0 144C41 128 79 132 110 140C153 152 187 161 238 149C269 142 293 131 320 123V180H0V144Z" fill="url(#forestFloor)"/>
+  <defs>
+    <linearGradient id="forestFloor" x1="160" y1="123" x2="160" y2="180" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#395E31" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#132C20"/>
+    </linearGradient>
+  </defs>
+</svg>

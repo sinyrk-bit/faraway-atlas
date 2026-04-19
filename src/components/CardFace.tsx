@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react'
 import { biomeMeta, resourceMeta } from '../game/content'
+import { getCardArt } from '../game/visuals'
 import type { PlayCard, RegionCard, SanctuaryCard } from '../game/types'
 
 interface CardFaceProps {
@@ -65,6 +66,7 @@ export function CardFace({
 }: CardFaceProps) {
   const biome = card.cardType === 'region' ? card.biome : card.linkedBiome
   const accent = biome ? biomeMeta[biome].accent : '#f4d79d'
+  const art = getCardArt(card)
   const classes = [
     'card-face',
     `card-face-${card.cardType}`,
@@ -89,6 +91,17 @@ export function CardFace({
       <div className="card-topline">
         <span className="card-type">{card.cardType === 'region' ? 'Region' : 'Sanctuary'}</span>
         {'serial' in card ? <span className="card-serial">#{card.serial}</span> : null}
+      </div>
+
+      <div className="card-art-wrap">
+        <div className="card-art-shell">
+          <img
+            alt={card.cardType === 'region' ? `${card.title} biome artwork` : `${card.title} sanctuary artwork`}
+            className="card-art-image"
+            src={art}
+          />
+          {'meteor' in card && card.meteor ? <span className="card-art-badge">Meteor Wake</span> : null}
+        </div>
       </div>
 
       <header className="card-header">

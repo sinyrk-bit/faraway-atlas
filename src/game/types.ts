@@ -180,6 +180,7 @@ export interface FinalStanding {
 export interface MatchConfig {
   mode: MatchMode
   playerName: string
+  humanCount: number
   aiCount: number
   difficulty: Difficulty
   seed: string
@@ -201,8 +202,11 @@ export interface MatchState {
   revealEntries: RevealEntry[]
   draftOrder: string[]
   draftIndex: number
+  activeHumanPlayerId?: string
   selectedRegionId?: string
+  selectedRegionByPlayerId: Record<string, string>
   openingSelectionIds: string[]
+  openingSelectionsByPlayerId: Record<string, string[]>
   openingReady: boolean
   activeDigitEchoes: number[]
   humanDraftSelection: DraftSelection
@@ -213,6 +217,8 @@ export interface PersistedProfile {
   playerName: string
   preferredMode: MatchMode
   preferredDifficulty: Difficulty
+  preferredHumanCount: number
+  preferredTotalPlayers: number
   preferredAiCount: number
   preferredSeed: string
   lastBestScore: number

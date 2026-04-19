@@ -1,0 +1,15 @@
+<svg width="320" height="180" viewBox="0 0 320 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="320" height="180" rx="28" fill="#081827"/>
+  <path d="M0 124C38 96 72 95 103 110C139 128 170 145 207 136C250 127 275 88 320 75V180H0V124Z" fill="url(#riverGlow)"/>
+  <path d="M17 132C64 95 109 105 140 121C171 137 207 149 254 123C276 111 295 95 320 91" stroke="#D8FAFF" stroke-width="8" stroke-linecap="round"/>
+  <path d="M19 28L72 52L126 22L178 60L235 31L303 67" stroke="#90DBFF" stroke-width="10" stroke-linecap="round" opacity="0.75"/>
+  <circle cx="243" cy="46" r="23" fill="#B5F3FF" fill-opacity="0.88"/>
+  <path d="M68 112L96 74L123 105" stroke="#9AD7FF" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M211 115L240 82L268 117" stroke="#D7F7FF" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <defs>
+    <linearGradient id="riverGlow" x1="165" y1="55" x2="165" y2="180" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#42D7F8" stop-opacity="0.82"/>
+      <stop offset="1" stop-color="#113B5A"/>
+    </linearGradient>
+  </defs>
+</svg>

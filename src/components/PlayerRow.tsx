@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react'
 import { biomeMeta } from '../game/content'
+import { getAvatarForPlayer } from '../game/visuals'
 import type { PlayerState } from '../game/types'
 
 interface PlayerRowProps {
@@ -30,13 +31,17 @@ function totals(player: PlayerState) {
 export function PlayerRow({ player, active = false, human = false, scoreLabel, echoDigits = [] }: PlayerRowProps) {
   const resourceTotals = totals(player)
   const routeSlots = Array.from({ length: 8 }, (_, index) => player.tableau[index] ?? null)
+  const avatar = getAvatarForPlayer(player.id)
 
   return (
     <section className={`player-row ${active ? 'is-active' : ''} ${human ? 'is-human' : ''}`}>
       <header className="player-row-header">
-        <div>
-          <span className="player-role">{human ? 'You' : 'Rival'}</span>
-          <h2>{player.name}</h2>
+        <div className="player-id-block">
+          <img alt={`${player.name} avatar`} className="player-avatar" src={avatar} />
+          <div>
+            <span className="player-role">{human ? 'You' : 'Rival'}</span>
+            <h2>{player.name}</h2>
+          </div>
         </div>
         <div className="player-score">
           <span>Projected Fame</span>

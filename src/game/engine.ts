@@ -21,6 +21,7 @@ export const HUMAN_PLAYER_ID = 'player-0'
 export const PROFILE_KEY = 'faraway-atlas-profile'
 
 const AI_NAMES = ['Lyra Vale', 'Oren Flint', 'Mira Sol', 'Khepri Moss', 'Sable Rune', 'Tarin Voss']
+const GUEST_NAMES = ['Guest One', 'Guest Two', 'Guest Three', 'Guest Four', 'Guest Five']
 
 function zeroResources(): ResourceMap {
   return {
@@ -52,7 +53,12 @@ function cloneState(state: MatchState): MatchState {
     log: [...state.log],
     revealEntries: [...state.revealEntries],
     draftOrder: [...state.draftOrder],
+    activeHumanPlayerId: state.activeHumanPlayerId,
+    selectedRegionByPlayerId: { ...state.selectedRegionByPlayerId },
     openingSelectionIds: [...state.openingSelectionIds],
+    openingSelectionsByPlayerId: Object.fromEntries(
+      Object.entries(state.openingSelectionsByPlayerId).map(([playerId, selections]) => [playerId, [...selections]]),
+    ),
     activeDigitEchoes: [...state.activeDigitEchoes],
     humanDraftSelection: { ...state.humanDraftSelection },
     finalStandings: state.finalStandings.map((standing) => ({
@@ -81,6 +87,24 @@ function updateLog(state: MatchState, line: string): MatchState {
 
 function getPlayerIndex(players: PlayerState[], playerId: string) {
   return players.findIndex((player) => player.id === playerId)
+}
+
+function getHumanPlayersFromList(players: PlayerState[]) {
+  return players.filter((player) => player.kind === 'human')
+}
+
+function getHumanPlayerIds(state: MatchState) {
+  return getHumanPlayersFromList(state.players).map((player) => player.id)
+}
+
+function nextHumanPlayerId(state: MatchState, currentId: string | undefined) {
+  const ids = getHumanPlayerIds(state)
+  if (!currentId) {
+    return ids[0]
+  }
+
+  const currentIndex = ids.indexOf(currentId)
+  return ids[currentIndex + 1]
 }
 
 function totalClues(player: PlayerState) {
@@ -520,7 +544,9 @@ function closeRound(state: MatchState): MatchState {
   nextState = maybeRefillMarket(nextState)
   nextState.round += 1
   nextState.phase = 'choose-region'
+  nextState.activeHumanPlayerId = nextHumanPlayerId(nextState, undefined)
   nextState.selectedRegionId = undefined
+  nextState.selectedRegionByPlayerId = {}
   nextState.revealEntries = []
   nextState.draftOrder = []
   nextState.draftIndex = 0
@@ -583,19 +609,19 @@ function applyDraftDecision(state: MatchState, playerId: string, selection: Draf
 
 function createPlayers(config: MatchConfig): PlayerState[] {
   return [
-    {
-      id: HUMAN_PLAYER_ID,
-      name: config.playerName.trim() || 'Explorer',
-      kind: 'human',
-      difficulty: 'oracle',
+    ...Array.from({ length: config.humanCount }, (_, index) => ({
+      id: `player-${index}`,
+      name: index === 0 ? config.playerName.trim() || 'Explorer' : GUEST_NAMES[index - 1] ?? `Guest ${index}`,
+      kind: 'human' as const,
+      difficulty: 'oracle' as const,
       hand: [],
       tableau: [],
       sanctuaries: [],
       pendingSanctuaries: [],
       scorePreview: 0,
-    },
+    })),
     ...Array.from({ length: config.aiCount }, (_, index) => ({
-      id: `player-${index + 1}`,
+      id: `player-${index + config.humanCount}`,
       name: AI_NAMES[index],
       kind: 'ai' as const,
       difficulty: config.difficulty,
@@ -620,12 +646,16 @@ function startClassicDeal(state: MatchState) {
   })
 
   const [market, rest] = takeTop(regionDeck, players.length + 1)
+  const firstHuman = getHumanPlayersFromList(players)[0]
   return updateScorePreviews({
     ...state,
     phase: 'choose-region',
     players,
     regionDeck: rest,
     market,
+    activeHumanPlayerId: firstHuman?.id,
+    selectedRegionId: undefined,
+    selectedRegionByPlayerId: {},
   })
 }
 
@@ -640,11 +670,16 @@ function startAdvancedDeal(state: MatchState) {
     }
   })
 
+  const firstHuman = getHumanPlayersFromList(players)[0]
   return updateScorePreviews({
     ...state,
     phase: 'opening-hand',
     players,
     regionDeck,
+    activeHumanPlayerId: firstHuman?.id,
+    openingSelectionIds: [],
+    openingSelectionsByPlayerId: {},
+    openingReady: false,
   })
 }
 
@@ -666,8 +701,11 @@ export function createMatch(config: MatchConfig): MatchState {
     revealEntries: [],
     draftOrder: [],
     draftIndex: 0,
+    activeHumanPlayerId: undefined,
     selectedRegionId: undefined,
+    selectedRegionByPlayerId: {},
     openingSelectionIds: [],
+    openingSelectionsByPlayerId: {},
     openingReady: false,
     activeDigitEchoes: [],
     humanDraftSelection: {},
@@ -687,7 +725,11 @@ export function createMatch(config: MatchConfig): MatchState {
 
 export function selectOpeningRegion(state: MatchState, cardId: string) {
   const next = cloneState(state)
-  const selected = new Set(next.openingSelectionIds)
+  const activePlayerId = next.activeHumanPlayerId
+  if (!activePlayerId) {
+    return state
+  }
+  const selected = new Set(next.openingSelectionsByPlayerId[activePlayerId] ?? [])
 
   if (selected.has(cardId)) {
     selected.delete(cardId)
@@ -695,24 +737,40 @@ export function selectOpeningRegion(state: MatchState, cardId: string) {
     selected.add(cardId)
   }
 
-  next.openingSelectionIds = Array.from(selected)
-  next.openingReady = next.openingSelectionIds.length === 3
+  const currentSelectionIds = Array.from(selected)
+  next.openingSelectionsByPlayerId[activePlayerId] = currentSelectionIds
+  next.openingSelectionIds = currentSelectionIds
+  next.openingReady = currentSelectionIds.length === 3
   return next
 }
 
 export function confirmOpeningSelection(state: MatchState) {
-  if (state.openingSelectionIds.length !== 3) {
+  if (!state.activeHumanPlayerId || state.openingSelectionIds.length !== 3) {
     return state
   }
 
   const next = cloneState(state)
+  const nextHumanId = nextHumanPlayerId(next, next.activeHumanPlayerId)
+
+  if (nextHumanId) {
+    const queuedSelection = next.openingSelectionsByPlayerId[nextHumanId] ?? []
+    return updateLog(
+      {
+        ...next,
+        activeHumanPlayerId: nextHumanId,
+        openingSelectionIds: queuedSelection,
+        openingReady: queuedSelection.length === 3,
+      },
+      `${next.players[getPlayerIndex(next.players, nextHumanId)].name}, choose your opening hand.`,
+    )
+  }
+
   let regionDeck = [...next.regionDeck]
   const returned: RegionCard[] = []
-
   next.players = next.players.map((player) => {
     const keepIds =
       player.kind === 'human'
-        ? next.openingSelectionIds
+        ? next.openingSelectionsByPlayerId[player.id] ?? []
         : aiChooseOpeningHand(player.hand, player.difficulty, next)
     const keep = player.hand.filter((card) => keepIds.includes(card.id))
     const reject = player.hand.filter((card) => !keepIds.includes(card.id))
@@ -733,7 +791,11 @@ export function confirmOpeningSelection(state: MatchState) {
       phase: 'choose-region',
       regionDeck: rest,
       market,
+      activeHumanPlayerId: nextHumanPlayerId(next, undefined),
+      selectedRegionByPlayerId: {},
+      selectedRegionId: undefined,
       openingSelectionIds: [],
+      openingSelectionsByPlayerId: {},
       openingReady: false,
     }),
     'Opening routes locked. The market is live.',
@@ -741,10 +803,41 @@ export function confirmOpeningSelection(state: MatchState) {
 }
 
 export function selectRegionToPlay(state: MatchState, cardId: string): MatchState {
+  const activePlayerId = state.activeHumanPlayerId
+  if (!activePlayerId) {
+    return state
+  }
+
   return {
     ...state,
+    selectedRegionByPlayerId: {
+      ...state.selectedRegionByPlayerId,
+      [activePlayerId]: cardId,
+    },
     selectedRegionId: cardId,
   }
+}
+
+export function confirmRegionChoice(state: MatchState): MatchState {
+  if (!state.activeHumanPlayerId || !state.selectedRegionId) {
+    return state
+  }
+
+  const next = cloneState(state)
+  const nextHumanId = nextHumanPlayerId(next, next.activeHumanPlayerId)
+
+  if (nextHumanId) {
+    return updateLog(
+      {
+        ...next,
+        activeHumanPlayerId: nextHumanId,
+        selectedRegionId: next.selectedRegionByPlayerId[nextHumanId],
+      },
+      `${next.players[getPlayerIndex(next.players, nextHumanId)].name}, choose your region.`,
+    )
+  }
+
+  return confirmReveal(next)
 }
 
 export function beginDraftPhase(state: MatchState): MatchState {
@@ -755,7 +848,7 @@ export function beginDraftPhase(state: MatchState): MatchState {
 }
 
 export function confirmReveal(state: MatchState) {
-  if (!state.selectedRegionId) {
+  if (!state.selectedRegionId && getHumanPlayerIds(state).length > 0) {
     return state
   }
 
@@ -764,7 +857,12 @@ export function confirmReveal(state: MatchState) {
 
   next.players.forEach((player) => {
     const chosenId =
-      player.kind === 'human' ? next.selectedRegionId : aiChooseRegionToPlay(player, next)
+      player.kind === 'human'
+        ? next.selectedRegionByPlayerId[player.id]
+        : aiChooseRegionToPlay(player, next)
+    if (!chosenId) {
+      return
+    }
     const handIndex = player.hand.findIndex((card) => card.id === chosenId)
     const [played] = player.hand.splice(handIndex, 1)
     reveals.push({ playerId: player.id, card: played })
@@ -810,6 +908,7 @@ export function confirmReveal(state: MatchState) {
   next.draftIndex = 0
   next.humanDraftSelection = {}
   next.phase = 'reveal'
+  next.activeHumanPlayerId = undefined
   next.activeDigitEchoes = Array.from(
     new Set(next.players.flatMap((player) => player.tableau.filter((card) => card.meteor).map((card) => card.serial % 10))),
   )
@@ -837,13 +936,13 @@ export function setHumanDraftSelection(state: MatchState, selection: DraftSelect
 
 export function confirmHumanDraft(state: MatchState) {
   const activePlayerId = state.draftOrder[state.draftIndex]
-  if (activePlayerId !== HUMAN_PLAYER_ID) {
+  const currentPlayer = state.players[getPlayerIndex(state.players, activePlayerId)]
+  if (!currentPlayer || currentPlayer.kind !== 'human') {
     return state
   }
 
-  const human = state.players[getPlayerIndex(state.players, HUMAN_PLAYER_ID)]
   const needsRegion = state.round < state.maxRounds && state.market.length > 0
-  const needsSanctuary = human.pendingSanctuaries.length > 0
+  const needsSanctuary = currentPlayer.pendingSanctuaries.length > 0
   const { regionId, sanctuaryId } = state.humanDraftSelection
 
   if (needsRegion && !regionId) {
@@ -854,7 +953,7 @@ export function confirmHumanDraft(state: MatchState) {
     return state
   }
 
-  return applyDraftDecision(state, HUMAN_PLAYER_ID, { regionId, sanctuaryId })
+  return applyDraftDecision(state, activePlayerId, { regionId, sanctuaryId })
 }
 
 export function runNextAiDraft(state: MatchState) {
@@ -880,11 +979,33 @@ export function getHumanPlayer(state: MatchState) {
   return state.players.find((player) => player.id === HUMAN_PLAYER_ID)
 }
 
+export function getHumanPlayers(state: MatchState) {
+  return getHumanPlayersFromList(state.players)
+}
+
+export function getActiveHumanPlayer(state: MatchState) {
+  if (state.phase === 'opening-hand' || state.phase === 'choose-region') {
+    if (!state.activeHumanPlayerId) {
+      return undefined
+    }
+    return state.players.find((player) => player.id === state.activeHumanPlayerId)
+  }
+
+  if (state.phase === 'draft') {
+    const current = getCurrentPlayer(state)
+    return current?.kind === 'human' ? current : undefined
+  }
+
+  return getHumanPlayers(state)[0]
+}
+
 export function defaultProfile() {
   return {
     playerName: 'Sinmy',
     preferredMode: 'classic' as const,
     preferredDifficulty: 'pathfinder' as const,
+    preferredHumanCount: 1,
+    preferredTotalPlayers: 3,
     preferredAiCount: 2,
     preferredSeed: '',
     lastBestScore: 0,
@@ -897,7 +1018,8 @@ export function buildFinalStandings(state: MatchState): FinalStanding[] {
 }
 
 export function humanDraftCanConfirm(state: MatchState) {
-  const human = getHumanPlayer(state)
+  const currentPlayer = getCurrentPlayer(state)
+  const human = currentPlayer?.kind === 'human' ? currentPlayer : undefined
   if (!human) {
     return false
   }

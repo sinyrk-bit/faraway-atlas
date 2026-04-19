@@ -11,9 +11,10 @@ import {
   buildFinalStandings,
   confirmHumanDraft,
   confirmOpeningSelection,
-  confirmReveal,
+  confirmRegionChoice,
   createMatch,
   defaultProfile,
+  getActiveHumanPlayer,
   getCurrentPlayer,
   getHumanPlayer,
   getPlayerDigitEchoes,
@@ -35,6 +36,35 @@ import type {
   PlayerState,
 } from './game/types'
 
+function readInviteProfilePatch() {
+  if (typeof window === 'undefined') {
+    return {}
+  }
+
+  const params = new URLSearchParams(window.location.search)
+  const mode = params.get('mode')
+  const difficulty = params.get('difficulty')
+  const totalPlayersValue = params.get('players')
+  const humanCountValue = params.get('humans')
+  const totalPlayers = totalPlayersValue ? Number(totalPlayersValue) : Number.NaN
+  const humanCount = humanCountValue ? Number(humanCountValue) : Number.NaN
+  const seed = params.get('seed')
+
+  return {
+    preferredMode: mode && ['classic', 'advanced', 'starfall'].includes(mode) ? (mode as MatchMode) : undefined,
+    preferredDifficulty:
+      difficulty && ['wanderer', 'pathfinder', 'oracle'].includes(difficulty)
+        ? (difficulty as Difficulty)
+        : undefined,
+    preferredTotalPlayers: Number.isFinite(totalPlayers) ? Math.min(6, Math.max(2, totalPlayers)) : undefined,
+    preferredHumanCount:
+      Number.isFinite(humanCount) && Number.isFinite(totalPlayers)
+        ? Math.min(Math.min(6, Math.max(2, totalPlayers)), Math.max(1, humanCount))
+        : undefined,
+    preferredSeed: seed ?? undefined,
+  }
+}
+
 function loadProfile(): PersistedProfile {
   if (typeof window === 'undefined') {
     return defaultProfile()
@@ -43,11 +73,19 @@ function loadProfile(): PersistedProfile {
   try {
     const stored = window.localStorage.getItem(PROFILE_KEY)
     if (!stored) {
-      return defaultProfile()
+      return {
+        ...defaultProfile(),
+        ...Object.fromEntries(
+          Object.entries(readInviteProfilePatch()).filter(([, value]) => value !== undefined),
+        ),
+      }
     }
     return {
       ...defaultProfile(),
       ...JSON.parse(stored),
+      ...Object.fromEntries(
+        Object.entries(readInviteProfilePatch()).filter(([, value]) => value !== undefined),
+      ),
     }
   } catch {
     return defaultProfile()
@@ -64,6 +102,20 @@ function updateProfile(nextProfile: PersistedProfile) {
   }
 
   window.localStorage.setItem(PROFILE_KEY, JSON.stringify(nextProfile))
+}
+
+function buildInviteUrl(profile: PersistedProfile) {
+  if (typeof window === 'undefined') {
+    return ''
+  }
+
+  const url = new URL(window.location.href)
+  url.searchParams.set('mode', profile.preferredMode)
+  url.searchParams.set('difficulty', profile.preferredDifficulty)
+  url.searchParams.set('players', String(profile.preferredTotalPlayers))
+  url.searchParams.set('humans', String(profile.preferredHumanCount))
+  url.searchParams.set('seed', profile.preferredSeed)
+  return url.toString()
 }
 
 function ModeTile({
@@ -203,6 +255,7 @@ function App() {
   const [match, setMatch] = useState<MatchState | null>(null)
   const [rulesOpen, setRulesOpen] = useState(false)
   const [focusedStandingEntry, setFocusedStandingEntry] = useState(0)
+  const [inviteStatus, setInviteStatus] = useState('')
 
   useEffect(() => {
     updateProfile(profile)
@@ -240,10 +293,12 @@ function App() {
   }, [match])
 
   const human = match ? getHumanPlayer(match) : undefined
+  const activeHuman = match ? getActiveHumanPlayer(match) : undefined
   const currentPlayer = match ? getCurrentPlayer(match) : undefined
   const standings = match ? buildFinalStandings(match) : []
-  const humanEchoDigits = human && match ? getPlayerDigitEchoes(human, match.config.mode) : []
-  const selectedHandCard = human?.hand.find((card) => card.id === match?.selectedRegionId)
+  const viewedHuman = activeHuman ?? human
+  const humanEchoDigits = viewedHuman && match ? getPlayerDigitEchoes(viewedHuman, match.config.mode) : []
+  const selectedHandCard = activeHuman?.hand.find((card) => card.id === match?.selectedRegionId)
   const humanDraftSelection = match?.humanDraftSelection ?? {}
   const dailySummary = standingsSummary(standings)
   const playerGridColumns = match
@@ -263,10 +318,13 @@ function App() {
 
   function startMatch(modeOverride?: MatchMode) {
     const mode = modeOverride ?? profile.preferredMode
+    const totalPlayers = Math.min(6, Math.max(2, profile.preferredTotalPlayers))
+    const humanCount = Math.min(totalPlayers, Math.max(1, profile.preferredHumanCount))
     const config: MatchConfig = {
       mode,
       playerName: profile.playerName || 'Explorer',
-      aiCount: Math.min(5, Math.max(1, profile.preferredAiCount)),
+      humanCount,
+      aiCount: totalPlayers - humanCount,
       difficulty: profile.preferredDifficulty,
       seed: (profile.preferredSeed || todaySeed).trim() || todaySeed,
     }
@@ -275,6 +333,17 @@ function App() {
       setMatch(createMatch(config))
       setFocusedStandingEntry(0)
     })
+  }
+
+  async function copyInviteLink(profileForLink = profile) {
+    const inviteUrl = buildInviteUrl(profileForLink)
+    if (!inviteUrl || typeof window === 'undefined' || !navigator.clipboard) {
+      return
+    }
+
+    await navigator.clipboard.writeText(inviteUrl)
+    setInviteStatus('Invite link copied.')
+    window.setTimeout(() => setInviteStatus(''), 1800)
   }
 
   function syncFinishedStats(activeMatch: MatchState) {
@@ -320,7 +389,11 @@ function App() {
               >
                 Play Daily Starfall
               </button>
+              <button className="ghost-button" onClick={() => void copyInviteLink()} type="button">
+                Copy Invite Link
+              </button>
             </div>
+            {inviteStatus ? <div className="invite-status">{inviteStatus}</div> : null}
           </div>
 
           <div className="hero-panel">
@@ -362,15 +435,40 @@ function App() {
                 <div className="segment-row">
                   {[2, 3, 4, 5, 6].map((count) => (
                     <SegmentButton
-                      current={String(profile.preferredAiCount + 1)}
+                      current={String(profile.preferredTotalPlayers)}
                       key={count}
-                      onClick={(value) => patchProfile({ preferredAiCount: Math.max(1, Number(value) - 1) })}
+                      onClick={(value) =>
+                        patchProfile({
+                          preferredTotalPlayers: Number(value),
+                          preferredHumanCount: Math.min(profile.preferredHumanCount, Number(value)),
+                        })
+                      }
                       value={String(count)}
                     >
                       {count}
                     </SegmentButton>
                   ))}
                 </div>
+              </div>
+
+              <div className="field">
+                <span>Human Seats</span>
+                <div className="segment-row">
+                  {Array.from({ length: profile.preferredTotalPlayers }, (_, index) => index + 1).map((count) => (
+                    <SegmentButton
+                      current={String(profile.preferredHumanCount)}
+                      key={count}
+                      onClick={(value) => patchProfile({ preferredHumanCount: Number(value) })}
+                      value={String(count)}
+                    >
+                      {count}
+                    </SegmentButton>
+                  ))}
+                </div>
+                <p className="field-hint">
+                  {profile.preferredTotalPlayers - profile.preferredHumanCount} AI seat
+                  {profile.preferredTotalPlayers - profile.preferredHumanCount === 1 ? '' : 's'}.
+                </p>
               </div>
 
               <div className="field">
@@ -430,21 +528,37 @@ function App() {
           <button className="ghost-button" onClick={() => setRulesOpen((value) => !value)} type="button">
             {rulesOpen ? 'Hide Rules' : 'Show Rules'}
           </button>
+          <button
+            className="ghost-button"
+            onClick={() =>
+              void copyInviteLink({
+                ...profile,
+                preferredMode: activeMatch.config.mode,
+                preferredHumanCount: activeMatch.config.humanCount,
+                preferredTotalPlayers: activeMatch.config.humanCount + activeMatch.config.aiCount,
+                preferredSeed: activeMatch.seedLabel,
+                preferredDifficulty: activeMatch.config.difficulty,
+              })
+            }
+            type="button"
+          >
+            Copy Table Link
+          </button>
         </div>
       </header>
     )
   }
 
-  function renderOpeningSelection(activeMatch: MatchState, humanPlayer: PlayerState) {
+  function renderOpeningSelection(activeMatch: MatchState, activeHumanPlayer: PlayerState) {
     return (
       <section className="phase-panel">
         <div className="phase-copy">
           <span className="phase-tag">Opening Draft</span>
-          <h2>Keep three of your five opening regions.</h2>
-          <p>Advanced mode front-loads the puzzle. Choose carefully and the discarded routes get shuffled back into the deck.</p>
+          <h2>{activeHumanPlayer.name}, keep three of your five opening regions.</h2>
+          <p>Advanced mode front-loads the puzzle. Pass the device after locking the current seat if multiple friends are playing locally.</p>
         </div>
         <div className="card-grid">
-          {humanPlayer.hand.map((card) => (
+          {activeHumanPlayer.hand.map((card) => (
             <CardFace
               card={card}
               compact
@@ -467,16 +581,16 @@ function App() {
     )
   }
 
-  function renderChooseRegion(activeMatch: MatchState, humanPlayer: PlayerState) {
+  function renderChooseRegion(activeMatch: MatchState, activeHumanPlayer: PlayerState) {
     return (
       <section className="phase-panel">
         <div className="phase-copy">
           <span className="phase-tag">Choose Region</span>
-          <h2>Plot your next step.</h2>
+          <h2>{activeHumanPlayer.name}, plot your next step.</h2>
           <p>Lower duration means earlier draft priority. Higher duration can unlock sanctuaries if you outpace your previous card.</p>
         </div>
         <div className="card-grid">
-          {humanPlayer.hand.map((card) => (
+          {activeHumanPlayer.hand.map((card) => (
             <CardFace
               card={card}
               compact
@@ -491,10 +605,10 @@ function App() {
           <button
             className="primary-button"
             disabled={!activeMatch.selectedRegionId}
-            onClick={() => setMatch((current) => (current ? confirmReveal(current) : current))}
+            onClick={() => setMatch((current) => (current ? confirmRegionChoice(current) : current))}
             type="button"
           >
-            Reveal All Routes
+            Lock Seat Choice
           </button>
           {selectedHandCard ? (
             <div className="selection-preview">
@@ -523,14 +637,14 @@ function App() {
     )
   }
 
-  function renderDraft(activeMatch: MatchState, humanPlayer: PlayerState) {
-    const isHumanTurn = currentPlayer?.id === humanPlayer.id
+  function renderDraft(activeMatch: MatchState, activeHumanPlayer: PlayerState) {
+    const isHumanTurn = currentPlayer?.id === activeHumanPlayer.id
 
     return (
       <section className="phase-panel phase-draft">
         <div className="phase-copy">
           <span className="phase-tag">Draft</span>
-          <h2>{isHumanTurn ? 'Your turn to draft.' : `${currentPlayer?.name} is drafting.`}</h2>
+          <h2>{isHumanTurn ? `${activeHumanPlayer.name}, it is your turn to draft.` : `${currentPlayer?.name} is drafting.`}</h2>
           <p>
             Draft order follows the lowest duration first. Claim one region from the market, then keep one sanctuary from any set you discovered.
           </p>
@@ -565,11 +679,11 @@ function App() {
           <div className="draft-column">
             <div className="column-heading">
               <span>Pending Sanctuaries</span>
-              <strong>{humanPlayer.pendingSanctuaries.length > 0 ? 'Choose one to keep' : 'No sanctuary reward this round'}</strong>
+              <strong>{activeHumanPlayer.pendingSanctuaries.length > 0 ? 'Choose one to keep' : 'No sanctuary reward this round'}</strong>
             </div>
             <div className="card-grid compact-grid">
-              {humanPlayer.pendingSanctuaries.length === 0 ? <div className="strip-empty">Nothing to choose here.</div> : null}
-              {humanPlayer.pendingSanctuaries.map((card) => (
+              {activeHumanPlayer.pendingSanctuaries.length === 0 ? <div className="strip-empty">Nothing to choose here.</div> : null}
+              {activeHumanPlayer.pendingSanctuaries.map((card) => (
                 <CardFace
                   card={card}
                   compact
@@ -651,10 +765,10 @@ function App() {
 
       <section className="playfield">
         <div className="playfield-main">
-          {match.phase === 'opening-hand' ? renderOpeningSelection(match, human) : null}
-          {match.phase === 'choose-region' ? renderChooseRegion(match, human) : null}
+          {match.phase === 'opening-hand' && activeHuman ? renderOpeningSelection(match, activeHuman) : null}
+          {match.phase === 'choose-region' && activeHuman ? renderChooseRegion(match, activeHuman) : null}
           {match.phase === 'reveal' ? renderReveal(match) : null}
-          {match.phase === 'draft' ? renderDraft(match, human) : null}
+          {match.phase === 'draft' ? renderDraft(match, activeHuman ?? human) : null}
           {match.phase === 'finished' ? renderFinished(match) : null}
 
           <section className="rivals-stack" style={{ gridTemplateColumns: playerGridColumns }}>
@@ -680,7 +794,7 @@ function App() {
                   className="market-mini"
                   key={card.id}
                   onClick={() => {
-                    if (match.phase === 'draft' && currentPlayer?.id === human.id) {
+                    if (match.phase === 'draft' && currentPlayer?.kind === 'human') {
                       updateHumanDraft({ regionId: card.id })
                     }
                   }}
@@ -703,7 +817,7 @@ function App() {
           </div>
 
           <div className="side-section">
-            <span>Your Echo Digits</span>
+            <span>{viewedHuman ? `${viewedHuman.name}'s Echo Digits` : 'Echo Digits'}</span>
             <div className="digit-row">
               {humanEchoDigits.length === 0 ? <p>No meteor echoes yet.</p> : null}
               {humanEchoDigits.map((digit) => (
