@@ -6,6 +6,7 @@ import type { PlayCard, RegionCard, SanctuaryCard } from '../game/types'
 interface CardFaceProps {
   card: PlayCard
   compact?: boolean
+  minimal?: boolean
   selected?: boolean
   selectable?: boolean
   highlight?: boolean
@@ -68,6 +69,7 @@ function ResourceBadges({ card }: { card: RegionCard | SanctuaryCard }) {
 export function CardFace({
   card,
   compact = false,
+  minimal = false,
   selected = false,
   selectable = false,
   highlight = false,
@@ -82,6 +84,7 @@ export function CardFace({
     'card-face',
     `card-face-${card.cardType}`,
     compact ? 'is-compact' : '',
+    minimal ? 'is-minimal' : '',
     selected ? 'is-selected' : '',
     selectable ? 'is-selectable' : '',
     highlight ? 'is-highlighted' : '',

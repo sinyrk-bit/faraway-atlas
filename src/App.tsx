@@ -686,6 +686,7 @@ function App() {
             <CardFace
               card={card}
               compact
+              minimal
               key={card.id}
               onClick={() => {
                 playSound('select')
@@ -725,6 +726,7 @@ function App() {
             <CardFace
               card={card}
               compact
+              minimal
               key={card.id}
               onClick={() => {
                 playSound('select')

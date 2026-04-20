@@ -438,7 +438,7 @@
   display: grid;
   gap: 0.62rem;
   min-height: 0;
-  grid-template-rows: minmax(15rem, 1.14fr) minmax(0, 0.86fr);
+  grid-template-rows: minmax(0, 1fr) minmax(7rem, 0.72fr);
 }
 
 .phase-panel {
@@ -518,6 +518,17 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.phase-panel-opening,
+.phase-panel-choose {
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+}
+
+.phase-panel-opening .card-grid,
+.phase-panel-choose .card-grid {
+  min-height: 0;
+  align-items: stretch;
+}
+
 .compact-grid {
   grid-template-columns: repeat(auto-fit, minmax(106px, 1fr));
 }
@@ -543,9 +554,14 @@
 }
 
 .card-face.is-compact {
-  min-height: 142px;
+  min-height: 0;
   padding: 0.52rem;
   gap: 0.34rem;
+}
+
+.card-face.is-minimal {
+  align-content: start;
+  gap: 0.28rem;
 }
 
 .card-face.is-selectable {
@@ -594,13 +610,51 @@
   position: relative;
   border-radius: 12px;
   overflow: hidden;
-  min-height: 4rem;
+  min-height: 0;
+  aspect-ratio: 16 / 10;
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.02);
 }
 
 .card-face.is-compact .card-art-shell {
-  min-height: 3rem;
+  min-height: 0;
+}
+
+.card-face.is-minimal .card-art-shell {
+  aspect-ratio: 16 / 9;
+}
+
+.card-face.is-minimal .card-header {
+  align-items: center;
+}
+
+.card-face.is-minimal .card-header p,
+.card-face.is-minimal .card-tokens,
+.card-face.is-minimal .card-quest,
+.card-face.is-minimal .card-flavor {
+  display: none;
+}
+
+.card-face.is-minimal .card-flags {
+  margin-top: auto;
+}
+
+.card-face.is-minimal .card-type,
+.card-face.is-minimal .card-serial,
+.card-face.is-minimal .card-flag,
+.card-face.is-minimal .card-time,
+.card-face.is-minimal .card-duration {
+  font-size: 0.5rem;
+}
+
+.card-face.is-minimal .card-header h3 {
+  font-size: 0.72rem;
+}
+
+.card-face.is-minimal .card-topline,
+.card-face.is-minimal .card-header,
+.card-face.is-minimal .card-flags {
+  gap: 0.3rem;
 }
 
 .card-face.is-selectable .card-art-image {
