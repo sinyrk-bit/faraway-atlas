@@ -1037,6 +1037,10 @@ function App() {
 
   function renderDraft(activeMatch: MatchState, activeHumanPlayer: PlayerState) {
     const isHumanTurn = currentPlayer?.id === activeHumanPlayer.id
+    const selectedMarketCard = activeMatch.market.find((card) => card.id === humanDraftSelection.regionId)
+    const selectedSanctuary = activeHumanPlayer.pendingSanctuaries.find((card) => card.id === humanDraftSelection.sanctuaryId)
+    const needsRegion = activeMatch.round < activeMatch.maxRounds && activeMatch.market.length > 0
+    const needsSanctuary = activeHumanPlayer.pendingSanctuaries.length > 0
 
     return (
       <section className="phase-panel phase-draft" key={`draft-${activeMatch.round}-${currentPlayer?.id ?? 'none'}-${activeMatch.draftIndex}`}>
@@ -1105,21 +1109,41 @@ function App() {
           </div>
         </div>
 
-        {isHumanTurn ? (
-          <button
-            className="primary-button"
-            disabled={!humanDraftCanConfirm(activeMatch)}
-            onClick={() => {
-              playSound('lock')
-              setMatch((current) => (current ? confirmHumanDraft(current) : current))
-            }}
-            type="button"
-          >
-            Draft bestaetigen
-          </button>
-        ) : (
-          <div className="waiting-chip">Warte auf {currentPlayer?.name} ...</div>
-        )}
+        <div className="draft-action-bar">
+          <div className="draft-selection-status">
+            <span>Auswahlstatus</span>
+            <strong>
+              {needsRegion
+                ? selectedMarketCard
+                  ? `Region bereit: ${selectedMarketCard.title}`
+                  : 'Region fehlt'
+                : 'Kein Marktpick noetig'}
+            </strong>
+            <p>
+              {needsSanctuary
+                ? selectedSanctuary
+                  ? `Refugium gesichert: ${selectedSanctuary.title}`
+                  : 'Refugium fehlt'
+                : 'Kein Refugium in dieser Runde erforderlich'}
+            </p>
+          </div>
+
+          {isHumanTurn ? (
+            <button
+              className="primary-button draft-confirm-button"
+              disabled={!humanDraftCanConfirm(activeMatch)}
+              onClick={() => {
+                playSound('lock')
+                setMatch((current) => (current ? confirmHumanDraft(current) : current))
+              }}
+              type="button"
+            >
+              Draft bestaetigen
+            </button>
+          ) : (
+            <div className="waiting-chip draft-waiting-chip">Warte auf {currentPlayer?.name} ...</div>
+          )}
+        </div>
       </section>
     )
   }
