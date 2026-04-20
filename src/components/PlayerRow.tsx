@@ -39,12 +39,12 @@ export function PlayerRow({ player, active = false, human = false, scoreLabel, e
         <div className="player-id-block">
           <img alt={`${player.name} avatar`} className="player-avatar" src={avatar} />
           <div>
-            <span className="player-role">{human ? 'Seat' : 'Rival'}</span>
+            <span className="player-role">{human ? 'Platz' : 'Rivale'}</span>
             <h2>{player.name}</h2>
           </div>
         </div>
         <div className="player-score">
-          <span>Projected Fame</span>
+          <span>Prognose Ruhm</span>
           <strong>{scoreLabel ?? `${player.scorePreview}`}</strong>
         </div>
       </header>
@@ -71,7 +71,7 @@ export function PlayerRow({ player, active = false, human = false, scoreLabel, e
               </div>
               <div className="route-slot-bottom">
                 <span>{biomeMeta[card.biome].short.slice(0, 2)}</span>
-                <span>{card.time === 'night' ? 'N' : 'D'}</span>
+                <span>{card.time === 'night' ? 'N' : 'T'}</span>
                 {card.meteor ? <span>M</span> : null}
               </div>
             </article>
@@ -84,11 +84,11 @@ export function PlayerRow({ player, active = false, human = false, scoreLabel, e
       </div>
 
       <div className="sanctuary-chip-row">
-        {player.sanctuaries.length === 0 ? <div className="strip-empty compact-empty">No sanctuaries yet.</div> : null}
+        {player.sanctuaries.length === 0 ? <div className="strip-empty compact-empty">Noch keine Refugien.</div> : null}
         {player.sanctuaries.map((card) => (
           <div className="sanctuary-chip" key={card.id}>
             <strong>{card.title}</strong>
-            <span>{card.linkedBiome ? biomeMeta[card.linkedBiome].short : 'Wild'}</span>
+            <span>{card.linkedBiome ? biomeMeta[card.linkedBiome].short : 'Neutral'}</span>
           </div>
         ))}
       </div>

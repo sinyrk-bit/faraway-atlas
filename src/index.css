@@ -1,12 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800&family=Rajdhani:wght@400;500;600;700&display=swap');
+
 :root {
-  font-family: 'Sora', 'Segoe UI', sans-serif;
+  --bg-0: #04050a;
+  --bg-1: #090d16;
+  --bg-2: #0e1322;
+  --panel: rgba(10, 14, 24, 0.84);
+  --panel-strong: rgba(12, 18, 31, 0.94);
+  --line: rgba(75, 245, 255, 0.2);
+  --line-strong: rgba(75, 245, 255, 0.52);
+  --text-main: #ecf7ff;
+  --text-soft: rgba(220, 241, 255, 0.78);
+  --neon-cyan: #37f3ff;
+  --neon-magenta: #ff4fd8;
+  --neon-lime: #9cff57;
+  --neon-gold: #ffd75a;
+  --shadow-neon: 0 0 28px rgba(55, 243, 255, 0.18);
+  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #f7f8ff;
+  color: var(--text-main);
   background:
-    radial-gradient(circle at top, rgba(66, 122, 215, 0.22), transparent 40%),
-    radial-gradient(circle at bottom, rgba(255, 184, 98, 0.18), transparent 36%),
-    #060913;
+    radial-gradient(circle at top, rgba(55, 243, 255, 0.22), transparent 42%),
+    radial-gradient(circle at 80% 16%, rgba(255, 79, 216, 0.18), transparent 28%),
+    radial-gradient(circle at bottom, rgba(156, 255, 87, 0.12), transparent 30%),
+    var(--bg-0);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -28,9 +45,10 @@ body {
   min-width: 320px;
   overflow: hidden;
   background:
-    radial-gradient(circle at 15% 10%, rgba(116, 217, 255, 0.16), transparent 25%),
-    radial-gradient(circle at 85% 85%, rgba(255, 192, 98, 0.14), transparent 20%),
-    linear-gradient(180deg, #050812, #090d1b 48%, #070a14);
+    radial-gradient(circle at 12% 8%, rgba(55, 243, 255, 0.18), transparent 22%),
+    radial-gradient(circle at 86% 18%, rgba(255, 79, 216, 0.14), transparent 18%),
+    radial-gradient(circle at 78% 84%, rgba(156, 255, 87, 0.12), transparent 18%),
+    linear-gradient(180deg, var(--bg-0), var(--bg-1) 45%, #060813 100%);
 }
 
 button,
@@ -40,6 +58,15 @@ input {
 
 button {
   cursor: pointer;
+}
+
+input {
+  outline: none;
+}
+
+::selection {
+  background: rgba(55, 243, 255, 0.28);
+  color: #fff;
 }
 
 a {

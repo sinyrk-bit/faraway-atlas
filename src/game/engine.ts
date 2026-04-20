@@ -20,8 +20,8 @@ import type {
 export const HUMAN_PLAYER_ID = 'player-0'
 export const PROFILE_KEY = 'faraway-atlas-profile'
 
-const AI_NAMES = ['Lyra Vale', 'Oren Flint', 'Mira Sol', 'Khepri Moss', 'Sable Rune', 'Tarin Voss']
-const GUEST_NAMES = ['Guest One', 'Guest Two', 'Guest Three', 'Guest Four', 'Guest Five']
+const AI_NAMES = ['Nyra Volt', 'Oren Kern', 'Mira Sol', 'Khepri Moos', 'Sable Rune', 'Tarin Voss']
+const GUEST_NAMES = ['Gast Eins', 'Gast Zwei', 'Gast Drei', 'Gast Vier', 'Gast Fünf']
 
 function zeroResources(): ResourceMap {
   return {
@@ -189,7 +189,7 @@ function scoreQuest(quest: Quest | undefined, context: ScoreContext, serial: num
   if (!quest) {
     return {
       points: 0,
-      reason: 'No scoring text.',
+      reason: 'Kein Wertungstext.',
       satisfied: true,
     }
   }
@@ -198,7 +198,7 @@ function scoreQuest(quest: Quest | undefined, context: ScoreContext, serial: num
   if (!satisfied) {
     return {
       points: 0,
-      reason: quest.prerequisite?.label ?? 'Prerequisite not met.',
+      reason: quest.prerequisite?.label ?? 'Bedingung nicht erfüllt.',
       satisfied: false,
     }
   }
@@ -209,7 +209,7 @@ function scoreQuest(quest: Quest | undefined, context: ScoreContext, serial: num
         quest.resource === 'clue' ? context.clues : context.resources[quest.resource as ResourceType]
       return {
         points: count * quest.points,
-        reason: `${quest.label} ${count} counted.`,
+        reason: `${quest.label} ${count} gewertet.`,
         satisfied: true,
       }
     }
@@ -217,7 +217,7 @@ function scoreQuest(quest: Quest | undefined, context: ScoreContext, serial: num
       const count = quest.biomes.reduce((sum, biome) => sum + context.biomeCounts[biome], 0)
       return {
         points: count * quest.points,
-        reason: `${quest.label} ${count} counted.`,
+        reason: `${quest.label} ${count} gewertet.`,
         satisfied: true,
       }
     }
@@ -230,20 +230,20 @@ function scoreQuest(quest: Quest | undefined, context: ScoreContext, serial: num
       )
       return {
         points: completeSets * quest.points,
-        reason: `${quest.label} ${completeSets} set${completeSets === 1 ? '' : 's'} completed.`,
+        reason: `${quest.label} ${completeSets} Set${completeSets === 1 ? '' : 's'} abgeschlossen.`,
         satisfied: true,
       }
     }
     case 'per-night':
       return {
         points: context.nightCount * quest.points,
-        reason: `${quest.label} ${context.nightCount} counted.`,
+        reason: `${quest.label} ${context.nightCount} gewertet.`,
         satisfied: true,
       }
     case 'per-sanctuary':
       return {
         points: context.sanctuaryCount * quest.points,
-        reason: `${quest.label} ${context.sanctuaryCount} counted.`,
+        reason: `${quest.label} ${context.sanctuaryCount} gewertet.`,
         satisfied: true,
       }
     case 'per-digit-match': {
@@ -251,7 +251,7 @@ function scoreQuest(quest: Quest | undefined, context: ScoreContext, serial: num
       const count = context.visibleRegionDigits[digit] ?? 0
       return {
         points: count * quest.points,
-        reason: `${quest.label} ${count} matching region${count === 1 ? '' : 's'}.`,
+        reason: `${quest.label} ${count} passende Region${count === 1 ? '' : 'en'}.`,
         satisfied: true,
       }
     }
@@ -264,7 +264,7 @@ function scoreQuest(quest: Quest | undefined, context: ScoreContext, serial: num
     default:
       return {
         points: 0,
-        reason: 'No scoring text.',
+        reason: 'Kein Wertungstext.',
         satisfied: true,
       }
   }
@@ -538,7 +538,7 @@ function closeRound(state: MatchState): MatchState {
     }
 
     const winner = finalStandings[0]
-    return updateLog(nextState, `${winner.playerName} wins with ${winner.total} Fame.`)
+    return updateLog(nextState, `${winner.playerName} gewinnt mit ${winner.total} Ruhm.`)
   }
 
   nextState = maybeRefillMarket(nextState)
@@ -553,7 +553,7 @@ function closeRound(state: MatchState): MatchState {
   nextState.humanDraftSelection = {}
   nextState.activeDigitEchoes = []
 
-  return updateLog(updateScorePreviews(nextState), `Round ${nextState.round} begins. Choose your next route.`)
+  return updateLog(updateScorePreviews(nextState), `Runde ${nextState.round} beginnt. Wähle deine nächste Route.`)
 }
 
 function applyDraftDecision(state: MatchState, playerId: string, selection: DraftSelection) {
@@ -594,10 +594,10 @@ function applyDraftDecision(state: MatchState, playerId: string, selection: Draf
   let loggedState = nextState
   if (pickedRegion || pickedSanctuary) {
     const fragments = [
-      pickedRegion ? `drafted ${pickedRegion.title}` : undefined,
-      pickedSanctuary ? `claimed ${pickedSanctuary.title}` : undefined,
+      pickedRegion ? `zieht ${pickedRegion.title}` : undefined,
+      pickedSanctuary ? `beansprucht ${pickedSanctuary.title}` : undefined,
     ].filter(Boolean)
-    loggedState = updateLog(nextState, `${player.name} ${fragments.join(' and ')}.`)
+    loggedState = updateLog(nextState, `${player.name} ${fragments.join(' und ')}.`)
   }
 
   if (loggedState.draftIndex >= loggedState.draftOrder.length) {
@@ -611,7 +611,7 @@ function createPlayers(config: MatchConfig): PlayerState[] {
   return [
     ...Array.from({ length: config.humanCount }, (_, index) => ({
       id: `player-${index}`,
-      name: index === 0 ? config.playerName.trim() || 'Explorer' : GUEST_NAMES[index - 1] ?? `Guest ${index}`,
+      name: index === 0 ? config.playerName.trim() || 'Erkunder' : GUEST_NAMES[index - 1] ?? `Gast ${index}`,
       kind: 'human' as const,
       difficulty: 'oracle' as const,
       hand: [],
@@ -718,8 +718,8 @@ export function createMatch(config: MatchConfig): MatchState {
   return updateLog(
     dealt,
     config.mode === 'advanced'
-      ? 'Choose three opening regions from the five offered to you.'
-      : 'The expedition begins. Choose your first region.',
+      ? 'Wähle drei Startregionen aus den fünf angebotenen Karten.'
+      : 'Die Expedition beginnt. Wähle deine erste Region.',
   )
 }
 
@@ -761,7 +761,7 @@ export function confirmOpeningSelection(state: MatchState) {
         openingSelectionIds: queuedSelection,
         openingReady: queuedSelection.length === 3,
       },
-      `${next.players[getPlayerIndex(next.players, nextHumanId)].name}, choose your opening hand.`,
+      `${next.players[getPlayerIndex(next.players, nextHumanId)].name}, wähle deine Auftakthand.`,
     )
   }
 
@@ -798,7 +798,7 @@ export function confirmOpeningSelection(state: MatchState) {
       openingSelectionsByPlayerId: {},
       openingReady: false,
     }),
-    'Opening routes locked. The market is live.',
+    'Auftaktrouten verriegelt. Der Markt ist offen.',
   )
 }
 
@@ -833,7 +833,7 @@ export function confirmRegionChoice(state: MatchState): MatchState {
         activeHumanPlayerId: nextHumanId,
         selectedRegionId: next.selectedRegionByPlayerId[nextHumanId],
       },
-      `${next.players[getPlayerIndex(next.players, nextHumanId)].name}, choose your region.`,
+      `${next.players[getPlayerIndex(next.players, nextHumanId)].name}, wähle deine Region.`,
     )
   }
 
@@ -913,14 +913,14 @@ export function confirmReveal(state: MatchState) {
     new Set(next.players.flatMap((player) => player.tableau.filter((card) => card.meteor).map((card) => card.serial % 10))),
   )
 
-  let loggedState = updateLog(next, `Round ${next.round} resolves. Draft order has been set.`)
+  let loggedState = updateLog(next, `Runde ${next.round} wird aufgedeckt. Die Draft-Reihenfolge steht.`)
   next.revealEntries.forEach((entry) => {
     const player = next.players[getPlayerIndex(next.players, entry.playerId)]
     loggedState = updateLog(
       loggedState,
       entry.foundSanctuary
-        ? `${player.name} explored ${entry.card.title} and found ${entry.sanctuaryCount} Sanctuary option${entry.sanctuaryCount === 1 ? '' : 's'}.`
-        : `${player.name} explored ${entry.card.title}.`,
+        ? `${player.name} erkundet ${entry.card.title} und findet ${entry.sanctuaryCount} Refugiumsoption${entry.sanctuaryCount === 1 ? '' : 'en'}.`
+        : `${player.name} erkundet ${entry.card.title}.`,
     )
   })
 
@@ -1040,7 +1040,7 @@ export function humanDraftCanConfirm(state: MatchState) {
 }
 
 export function standingsSummary(standings: FinalStanding[]) {
-  return standings.map((standing, index) => `${index + 1}. ${standing.playerName} - ${standing.total} Fame`)
+  return standings.map((standing, index) => `${index + 1}. ${standing.playerName} - ${standing.total} Ruhm`)
 }
 
 export function bestScoreFromStandings(standings: FinalStanding[], playerName: string) {

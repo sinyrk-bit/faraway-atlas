@@ -45,6 +45,20 @@ type MatchSnapshot = {
   activeHumanPlayerId?: string
 }
 
+const phaseLabels: Record<MatchState['phase'], string> = {
+  'opening-hand': 'Auftakthand',
+  'choose-region': 'Routenwahl',
+  reveal: 'Aufdecken',
+  draft: 'Marktphase',
+  scoring: 'Wertung',
+  finished: 'Endstand',
+}
+
+const timeLabels = {
+  day: 'Tag',
+  night: 'Nacht',
+} as const
+
 function readInviteProfilePatch() {
   if (typeof window === 'undefined') {
     return {}
@@ -181,12 +195,12 @@ function RevealSummary({ match }: { match: MatchState }) {
             </div>
             <div className="reveal-meta">
               <span>{entry.card.duration}h</span>
-              <span>{entry.card.time}</span>
+              <span>{timeLabels[entry.card.time]}</span>
             </div>
             <p>
               {entry.foundSanctuary
-                ? `${entry.sanctuaryCount} Sanctuary option${entry.sanctuaryCount === 1 ? '' : 's'} unlocked.`
-                : 'No Sanctuary found this round.'}
+                ? `${entry.sanctuaryCount} Refugiumsoption${entry.sanctuaryCount === 1 ? '' : 'en'} freigeschaltet.`
+                : 'In dieser Runde wurde kein Refugium gefunden.'}
             </p>
           </article>
         )
@@ -203,20 +217,20 @@ function RulesDrawer({ open }: { open: boolean }) {
   return (
     <aside className="rules-drawer">
       <div className="rules-block">
-        <span>Core Loop</span>
-        <p>Play one region per round, reveal simultaneously, then draft from the market in ascending duration order.</p>
+        <span>Kernablauf</span>
+        <p>Spiele pro Runde eine Region, decke gleichzeitig auf und drafte danach in aufsteigender Dauer aus dem Markt.</p>
       </div>
       <div className="rules-block">
-        <span>Sanctuaries</span>
-        <p>You find sanctuaries only when the region you just played has a higher duration than the region before it.</p>
+        <span>Refugien</span>
+        <p>Refugien findest du nur dann, wenn die soeben gespielte Region eine höhere Dauer als die vorherige besitzt.</p>
       </div>
       <div className="rules-block">
-        <span>Scoring</span>
-        <p>At the end, region cards score from right to left. Earlier cards only see what has already been revealed, plus all sanctuaries.</p>
+        <span>Wertung</span>
+        <p>Am Ende werten Regionenkarten von rechts nach links. Frühere Karten sehen nur bereits aufgedeckte Regionen plus alle Refugien.</p>
       </div>
       <div className="rules-block">
-        <span>Starfall Variant</span>
-        <p>Meteor cards stay visible during scoring and make all regions with the same last digit visible too.</p>
+        <span>Sternensturz</span>
+        <p>Meteorkarten bleiben während der Wertung sichtbar und lassen auch alle Regionen mit derselben Endziffer aufleuchten.</p>
       </div>
     </aside>
   )
@@ -234,10 +248,10 @@ function StandingPanel({
   return (
     <article className={`standing-panel ${rank === 0 ? 'is-winner' : ''}`}>
       <header>
-        <span>{rank === 0 ? 'Winner' : `#${rank + 1}`}</span>
+        <span>{rank === 0 ? 'Sieger' : `#${rank + 1}`}</span>
         <div>
           <h3>{player.playerName}</h3>
-          <strong>{player.total} Fame</strong>
+          <strong>{player.total} Ruhm</strong>
         </div>
       </header>
       <div className="standing-breakdown">
@@ -382,7 +396,7 @@ function App() {
     const humanCount = Math.min(totalPlayers, Math.max(1, profile.preferredHumanCount))
     const config: MatchConfig = {
       mode,
-      playerName: profile.playerName || 'Explorer',
+      playerName: profile.playerName || 'Erkunder',
       humanCount,
       aiCount: totalPlayers - humanCount,
       difficulty: profile.preferredDifficulty,
@@ -404,13 +418,13 @@ function App() {
 
     await navigator.clipboard.writeText(inviteUrl)
     playSound('tap')
-    setInviteStatus('Invite link copied.')
+    setInviteStatus('Einladungslink kopiert.')
     window.setTimeout(() => setInviteStatus(''), 1800)
   }
 
   function syncFinishedStats(activeMatch: MatchState) {
     const latestStandings = buildFinalStandings(activeMatch)
-    const bestScore = bestScoreFromStandings(latestStandings, profile.playerName || 'Explorer')
+    const bestScore = bestScoreFromStandings(latestStandings, profile.playerName || 'Erkunder')
     const winner = latestStandings[0]?.playerName ?? ''
 
     patchProfile({
@@ -432,14 +446,14 @@ function App() {
       <main className="screen screen-menu">
         <section className="hero-shell">
           <div className="hero-copy">
-            <p className="eyebrow">Unofficial premium tribute build</p>
+            <p className="eyebrow">Inoffizieller Neon-Prototyp</p>
             <h1>Faraway Atlas</h1>
             <p className="hero-text">
-              A polished browser adaptation with reverse scoring, sanctuary chaining, multiple variants and AI rivals built for instant testing on GitHub and Render.
+              Eine kompakte Browser-Edition im dunklen Neon-Look mit Rueckwaertswertung, Refugium-Ketten, mehreren Varianten und KI-Rivalen fuer direkte Live-Tests.
             </p>
             <div className="hero-actions">
               <button className="primary-button" onClick={() => startMatch()} type="button">
-                Start Expedition
+                Expedition starten
               </button>
               <button
                 className="ghost-button"
@@ -450,10 +464,10 @@ function App() {
                 }}
                 type="button"
               >
-                Play Daily Starfall
+                Tagesmodus Sternensturz
               </button>
               <button className="ghost-button" onClick={() => void copyInviteLink()} type="button">
-                Copy Invite Link
+                Einladungslink kopieren
               </button>
             </div>
             {inviteStatus ? <div className="invite-status">{inviteStatus}</div> : null}
@@ -461,7 +475,7 @@ function App() {
 
           <div className="hero-panel">
             <div className="panel-section">
-              <span className="panel-label">Play Styles</span>
+              <span className="panel-label">Spielmodi</span>
               <div className="mode-grid">
                 {(['classic', 'advanced', 'starfall'] as MatchMode[]).map((mode) => (
                   <ModeTile
@@ -479,16 +493,16 @@ function App() {
 
             <div className="panel-section settings-grid">
               <label className="field">
-                <span>Explorer Name</span>
+                <span>Name des Erkunders</span>
                 <input
                   onChange={(event) => patchProfile({ playerName: event.target.value })}
-                  placeholder="Explorer"
+                  placeholder="Erkunder"
                   value={profile.playerName}
                 />
               </label>
 
               <label className="field">
-                <span>Seed</span>
+                <span>Seed-Code</span>
                 <input
                   onChange={(event) => patchProfile({ preferredSeed: event.target.value })}
                   placeholder={todaySeed}
@@ -497,7 +511,7 @@ function App() {
               </label>
 
               <div className="field">
-                <span>Total Players</span>
+                <span>Spieler gesamt</span>
                 <div className="segment-row">
                   {[2, 3, 4, 5, 6].map((count) => (
                     <SegmentButton
@@ -521,7 +535,7 @@ function App() {
               </div>
 
               <div className="field">
-                <span>Human Seats</span>
+                <span>Menschliche Plaetze</span>
                 <div className="segment-row">
                   {Array.from({ length: profile.preferredTotalPlayers }, (_, index) => index + 1).map((count) => (
                     <SegmentButton
@@ -538,13 +552,13 @@ function App() {
                   ))}
                 </div>
                 <p className="field-hint">
-                  {profile.preferredTotalPlayers - profile.preferredHumanCount} AI seat
-                  {profile.preferredTotalPlayers - profile.preferredHumanCount === 1 ? '' : 's'}.
+                  {profile.preferredTotalPlayers - profile.preferredHumanCount} KI-Platz
+                  {profile.preferredTotalPlayers - profile.preferredHumanCount === 1 ? '' : 'e'}.
                 </p>
               </div>
 
               <div className="field">
-                <span>Difficulty</span>
+                <span>Schwierigkeit</span>
                 <div className="segment-row">
                   {(['wanderer', 'pathfinder', 'oracle'] as Difficulty[]).map((difficulty) => (
                     <SegmentButton
@@ -566,19 +580,19 @@ function App() {
 
             <div className="stats-row">
               <article>
-                <span>Best Score</span>
+                <span>Bestwert</span>
                 <strong>{profile.lastBestScore || '--'}</strong>
               </article>
               <article>
-                <span>Last Winner</span>
+                <span>Letzter Sieger</span>
                 <strong>{profile.lastWinner || '--'}</strong>
               </article>
               <article>
-                <span>Mode</span>
+                <span>Modus</span>
                 <strong>{modeMeta[profile.preferredMode].title}</strong>
               </article>
               <article>
-                <span>Sound</span>
+                <span>Audio</span>
                 <button
                   className="inline-toggle"
                   onClick={() => {
@@ -587,7 +601,7 @@ function App() {
                   }}
                   type="button"
                 >
-                  {profile.soundEnabled ? 'On' : 'Off'}
+                  {profile.soundEnabled ? 'An' : 'Aus'}
                 </button>
               </article>
             </div>
@@ -601,17 +615,17 @@ function App() {
     return (
       <header className="top-bar">
         <div>
-          <span className="eyebrow">Round {activeMatch.round} / {activeMatch.maxRounds}</span>
+          <span className="eyebrow">Runde {activeMatch.round} / {activeMatch.maxRounds}</span>
           <h1>{modeMeta[activeMatch.config.mode].title}</h1>
         </div>
         <div className="top-bar-metrics">
           <div>
-            <span>Seed</span>
+            <span>Seed-Code</span>
             <strong>{activeMatch.seedLabel}</strong>
           </div>
           <div>
             <span>Phase</span>
-            <strong>{activeMatch.phase.replace('-', ' ')}</strong>
+            <strong>{phaseLabels[activeMatch.phase]}</strong>
           </div>
           <button
             className="ghost-button"
@@ -621,7 +635,7 @@ function App() {
             }}
             type="button"
           >
-            {rulesOpen ? 'Hide Rules' : 'Show Rules'}
+            {rulesOpen ? 'Regeln ausblenden' : 'Regeln einblenden'}
           </button>
           <button
             className="ghost-button"
@@ -631,7 +645,7 @@ function App() {
             }}
             type="button"
           >
-            Sound {profile.soundEnabled ? 'On' : 'Off'}
+            Audio {profile.soundEnabled ? 'An' : 'Aus'}
           </button>
           <button
             className="ghost-button"
@@ -647,7 +661,7 @@ function App() {
             }
             type="button"
           >
-            Copy Table Link
+            Tischlink kopieren
           </button>
         </div>
       </header>
@@ -658,11 +672,11 @@ function App() {
     return (
       <section className="phase-panel phase-panel-opening" key={`opening-${activeMatch.round}-${activeHumanPlayer.id}`}>
         <div className="phase-copy">
-          <span className="phase-tag">Opening Draft</span>
-          <h2>{activeHumanPlayer.name}, keep three of your five opening regions.</h2>
-          <p>Advanced mode front-loads the puzzle. Pass the device after locking the current seat if multiple friends are playing locally.</p>
+          <span className="phase-tag">Auftaktdraft</span>
+          <h2>{activeHumanPlayer.name}, behalte drei deiner fuenf Startregionen.</h2>
+          <p>Der erweiterte Modus legt das Puzzle nach vorn. Reiche das Geraet nach dem Verriegeln weiter, wenn mehrere Freunde lokal spielen.</p>
         </div>
-        <div className="seat-banner">Handing control to {activeHumanPlayer.name}</div>
+        <div className="seat-banner">Steuerung an {activeHumanPlayer.name}</div>
         <div className="card-grid">
           {activeHumanPlayer.hand.map((card) => (
             <CardFace
@@ -687,7 +701,7 @@ function App() {
           }}
           type="button"
         >
-          Lock Opening Hand
+          Auftakthand verriegeln
         </button>
       </section>
     )
@@ -697,11 +711,11 @@ function App() {
     return (
       <section className="phase-panel phase-panel-choose" key={`choose-${activeMatch.round}-${activeHumanPlayer.id}`}>
         <div className="phase-copy">
-          <span className="phase-tag">Choose Region</span>
-          <h2>{activeHumanPlayer.name}, plot your next step.</h2>
-          <p>Lower duration means earlier draft priority. Higher duration can unlock sanctuaries if you outpace your previous card.</p>
+          <span className="phase-tag">Region waehlen</span>
+          <h2>{activeHumanPlayer.name}, plane deinen naechsten Schritt.</h2>
+          <p>Niedrige Dauer bedeutet fruehere Draft-Prioritaet. Hoehere Dauer kann Refugien freischalten, wenn du deine letzte Karte uebertriffst.</p>
         </div>
-        <div className="seat-banner">Active seat: {activeHumanPlayer.name}</div>
+        <div className="seat-banner">Aktiver Platz: {activeHumanPlayer.name}</div>
         <div className="card-grid">
           {activeHumanPlayer.hand.map((card) => (
             <CardFace
@@ -727,11 +741,11 @@ function App() {
             }}
             type="button"
           >
-            Lock Seat Choice
+            Platzwahl verriegeln
           </button>
           {selectedHandCard ? (
             <div className="selection-preview">
-              <span>Locked card</span>
+              <span>Verriegelte Karte</span>
               <strong>{selectedHandCard.title}</strong>
             </div>
           ) : null}
@@ -744,9 +758,9 @@ function App() {
     return (
       <section className="phase-panel phase-panel-reveal" key={`reveal-${activeMatch.round}`}>
         <div className="phase-copy">
-          <span className="phase-tag">Reveal</span>
-          <h2>The table resolves in tempo order.</h2>
-          <p>Fast routes draft first. Sanctuary checks happen before the market draft and can reshape the entire round.</p>
+          <span className="phase-tag">Aufdecken</span>
+          <h2>Der Tisch loest sich in Temporeihenfolge auf.</h2>
+          <p>Schnelle Routen draften zuerst. Refugiumspruefungen passieren vor dem Marktdraft und koennen die ganze Runde kippen.</p>
         </div>
         <RevealSummary match={activeMatch} />
         <button
@@ -757,7 +771,7 @@ function App() {
           }}
           type="button"
         >
-          Continue To Draft
+          Weiter zur Marktphase
         </button>
       </section>
     )
@@ -769,21 +783,21 @@ function App() {
     return (
       <section className="phase-panel phase-draft" key={`draft-${activeMatch.round}-${currentPlayer?.id ?? 'none'}-${activeMatch.draftIndex}`}>
         <div className="phase-copy">
-          <span className="phase-tag">Draft</span>
-          <h2>{isHumanTurn ? `${activeHumanPlayer.name}, it is your turn to draft.` : `${currentPlayer?.name} is drafting.`}</h2>
+          <span className="phase-tag">Marktphase</span>
+          <h2>{isHumanTurn ? `${activeHumanPlayer.name}, du bist mit dem Draft dran.` : `${currentPlayer?.name} draftet gerade.`}</h2>
           <p>
-            Draft order follows the lowest duration first. Claim one region from the market, then keep one sanctuary from any set you discovered.
+            Die Draft-Reihenfolge beginnt bei der niedrigsten Dauer. Nimm eine Region aus dem Markt und sichere danach ein Refugium aus deinen Funden.
           </p>
         </div>
 
         <div className="draft-columns">
           <div className="draft-column">
             <div className="column-heading">
-              <span>Market</span>
-              <strong>{activeMatch.round === activeMatch.maxRounds ? 'Closed on round 8' : 'Pick one region'}</strong>
+              <span>Markt</span>
+              <strong>{activeMatch.round === activeMatch.maxRounds ? 'In Runde 8 geschlossen' : 'Waehle eine Region'}</strong>
             </div>
             <div className="card-grid compact-grid">
-              {activeMatch.market.length === 0 ? <div className="strip-empty">No market draft this step.</div> : null}
+              {activeMatch.market.length === 0 ? <div className="strip-empty">In diesem Schritt gibt es keinen Marktdraft.</div> : null}
               {activeMatch.market.map((card) => (
                 <CardFace
                   card={card}
@@ -807,11 +821,11 @@ function App() {
 
           <div className="draft-column">
             <div className="column-heading">
-              <span>Pending Sanctuaries</span>
-              <strong>{activeHumanPlayer.pendingSanctuaries.length > 0 ? 'Choose one to keep' : 'No sanctuary reward this round'}</strong>
+              <span>Offene Refugien</span>
+              <strong>{activeHumanPlayer.pendingSanctuaries.length > 0 ? 'Waehle eins zum Behalten' : 'Kein Refugiumsbonus in dieser Runde'}</strong>
             </div>
             <div className="card-grid compact-grid">
-              {activeHumanPlayer.pendingSanctuaries.length === 0 ? <div className="strip-empty">Nothing to choose here.</div> : null}
+              {activeHumanPlayer.pendingSanctuaries.length === 0 ? <div className="strip-empty">Hier gibt es nichts auszuwaehlen.</div> : null}
               {activeHumanPlayer.pendingSanctuaries.map((card) => (
                 <CardFace
                   card={card}
@@ -843,10 +857,10 @@ function App() {
             }}
             type="button"
           >
-            Confirm Draft
+            Draft bestaetigen
           </button>
         ) : (
-          <div className="waiting-chip">Waiting for {currentPlayer?.name}...</div>
+          <div className="waiting-chip">Warte auf {currentPlayer?.name} ...</div>
         )}
       </section>
     )
@@ -856,8 +870,8 @@ function App() {
     return (
       <section className="phase-panel phase-finished" key={`finished-${activeMatch.round}`}>
         <div className="phase-copy">
-          <span className="phase-tag">Final Fame</span>
-          <h2>{standings[0]?.playerName} leads the atlas.</h2>
+          <span className="phase-tag">Endwert</span>
+          <h2>{standings[0]?.playerName} fuehrt den Atlas an.</h2>
           <p>{dailySummary.join('  |  ')}</p>
         </div>
         <div className="standings-grid">
@@ -875,7 +889,7 @@ function App() {
             }}
             type="button"
           >
-            Rematch Same Mode
+            Revanche im selben Modus
           </button>
           <button
             className="ghost-button"
@@ -886,7 +900,7 @@ function App() {
             }}
             type="button"
           >
-            Return To Menu
+            Zurueck zum Menue
           </button>
         </div>
       </section>
@@ -927,9 +941,9 @@ function App() {
 
         <aside className="side-panel">
           <div className="side-section">
-            <span>Market Pulse</span>
+            <span>Marktpuls</span>
             <div className="market-mini-list">
-              {match.market.length === 0 ? <p>Market is currently empty.</p> : null}
+              {match.market.length === 0 ? <p>Der Markt ist aktuell leer.</p> : null}
               {match.market.map((card) => (
                 <button
                   className="market-mini"
@@ -950,7 +964,7 @@ function App() {
           </div>
 
           <div className="side-section">
-            <span>Expedition Log</span>
+            <span>Expeditionslog</span>
             <div className="log-list">
               {match.log.slice(0, 5).map((entry) => (
                 <p key={entry}>{entry}</p>
@@ -959,9 +973,9 @@ function App() {
           </div>
 
           <div className="side-section">
-            <span>{viewedHuman ? `${viewedHuman.name}'s Echo Digits` : 'Echo Digits'}</span>
+            <span>{viewedHuman ? `Echo-Ziffern von ${viewedHuman.name}` : 'Echo-Ziffern'}</span>
             <div className="digit-row">
-              {humanEchoDigits.length === 0 ? <p>No meteor echoes yet.</p> : null}
+              {humanEchoDigits.length === 0 ? <p>Noch keine Meteorechos.</p> : null}
               {humanEchoDigits.map((digit) => (
                 <span className="digit-chip" key={digit}>
                   {digit}

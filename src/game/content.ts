@@ -14,16 +14,16 @@ const BIOMES: Biome[] = ['river', 'city', 'forest', 'desert']
 const RESOURCES: ResourceType[] = ['uddu', 'okiko', 'goldlog']
 
 const biomeNames: Record<Biome, { label: string; short: string; accent: string }> = {
-  river: { label: 'River Reach', short: 'River', accent: '#74d9ff' },
-  city: { label: 'Sunken City', short: 'City', accent: '#ffba72' },
-  forest: { label: 'Mushroom Forest', short: 'Forest', accent: '#8fed8c' },
-  desert: { label: 'Stone Desert', short: 'Desert', accent: '#f2d08d' },
+  river: { label: 'Neonkanal', short: 'Kanal', accent: '#36f3ff' },
+  city: { label: 'Versunkene Stadt', short: 'Stadt', accent: '#ff8bff' },
+  forest: { label: 'Pilzwald', short: 'Wald', accent: '#8dff72' },
+  desert: { label: 'Steinwüste', short: 'Wüste', accent: '#ffd85f' },
 }
 
 const resourceNames: Record<ResourceType, { label: string; accent: string; glyph: string }> = {
-  uddu: { label: 'Uddu Stone', accent: '#7bc6ff', glyph: 'UD' },
-  okiko: { label: 'Okiko Chimera', accent: '#ff86cb', glyph: 'OK' },
-  goldlog: { label: 'Goldlog Thistle', accent: '#ffe272', glyph: 'GL' },
+  uddu: { label: 'Uddu-Stein', accent: '#7bc6ff', glyph: 'UD' },
+  okiko: { label: 'Okiko-Chimäre', accent: '#ff66cf', glyph: 'OK' },
+  goldlog: { label: 'Goldlog-Distel', accent: '#ffe272', glyph: 'GL' },
 }
 
 export const biomeMeta = biomeNames
@@ -34,22 +34,22 @@ export const modeMeta: Record<
   { title: string; summary: string; accent: string; detail: string }
 > = {
   classic: {
-    title: 'Classic Expedition',
-    summary: 'The pure eight-round race through Alula.',
-    accent: '#74d9ff',
-    detail: 'Base Faraway-style flow with reverse scoring, sanctuaries and tactical drafting.',
+    title: 'Klassische Expedition',
+    summary: 'Der reine Acht-Runden-Lauf durch Alula.',
+    accent: '#36f3ff',
+    detail: 'Der Grundmodus mit Rückwärtswertung, Refugien und taktischem Marktdraft.',
   },
   advanced: {
-    title: 'Advanced Opening',
-    summary: 'Draft five opening regions and keep only three.',
-    accent: '#b38cff',
-    detail: 'A deeper opener for stronger synergies and more exact route planning.',
+    title: 'Erweiterter Auftakt',
+    summary: 'Ziehe fünf Startregionen und behalte nur drei.',
+    accent: '#ff4fd8',
+    detail: 'Mehr Tiefe im Start, stärkere Synergien und präzisere Routenplanung.',
   },
   starfall: {
-    title: 'Starfall Skies',
-    summary: 'Meteor regions remain visible while echoes of matching digits light up.',
-    accent: '#ffd36d',
-    detail: 'An expansion-inspired mode with meteor cards, tie-break tempo and extra digit synergies.',
+    title: 'Sternensturz',
+    summary: 'Meteorregionen bleiben sichtbar und gleiche Endziffern glühen nach.',
+    accent: '#ffe45e',
+    detail: 'Ein Erweiterungsmodus mit Meteorkarten, Tempovorteilen und zusätzlichen Ziffernsynergien.',
   },
 }
 
@@ -59,63 +59,63 @@ export const difficultyMeta: Record<
 > = {
   wanderer: {
     label: 'Wanderer',
-    summary: 'Relaxed AI with wider mistakes and softer tempo reads.',
+    summary: 'Entspannte KI mit gröberen Fehlern und weicheren Tempolesungen.',
     volatility: 5,
     precision: 0.65,
   },
   pathfinder: {
     label: 'Pathfinder',
-    summary: 'Balanced opponent that values sanctuaries and efficient timing.',
+    summary: 'Ausgewogene KI, die Refugien und sauberes Timing hoch bewertet.',
     volatility: 3,
     precision: 0.82,
   },
   oracle: {
     label: 'Oracle',
-    summary: 'Sharper drafting, tighter sequencing and better endgame focus.',
+    summary: 'Scharfer Draft, engere Reihenfolgen und stärkerer Endspiel-Fokus.',
     volatility: 1.5,
     precision: 0.94,
   },
 }
 
 const adjectives = [
-  'Whispering',
-  'Gilded',
-  'Moonlit',
-  'Verdant',
-  'Shifting',
-  'Amber',
-  'Silent',
-  'Luminous',
-  'Starlit',
-  'Hidden',
+  'Echo',
+  'Neon',
+  'Signal',
+  'Schatten',
+  'Glas',
+  'Dämmer',
   'Obsidian',
-  'Radiant',
+  'Stern',
+  'Flux',
+  'Chrom',
+  'Phantom',
+  'Licht',
 ]
 
 const biomeNouns: Record<Biome, string[]> = {
-  river: ['Delta', 'Ferry', 'Spring', 'Canal', 'Cascade', 'Harbor', 'Ford', 'Wake'],
-  city: ['Vault', 'Arcade', 'Forum', 'Spire', 'Gallery', 'Causeway', 'Atrium', 'Bastion'],
-  forest: ['Bloom', 'Canopy', 'Grove', 'Mire', 'Glade', 'Hollow', 'Mycelium', 'Sanctum'],
-  desert: ['Mesa', 'Mirage', 'Basin', 'Ridge', 'Dune', 'Cradle', 'Plateau', 'Badlands'],
+  river: ['Delta', 'Schleuse', 'Quelle', 'Kanal', 'Kaskade', 'Hafen', 'Furt', 'Woge'],
+  city: ['Tresor', 'Arkade', 'Forum', 'Spire', 'Galerie', 'Korridor', 'Atrium', 'Bastion'],
+  forest: ['Blüte', 'Dach', 'Hain', 'Moor', 'Lichtung', 'Hohlraum', 'Myzel', 'Sanktuum'],
+  desert: ['Mesa', 'Mirage', 'Becken', 'Grat', 'Düne', 'Wiege', 'Plateau', 'Ödland'],
 }
 
 const sanctuaryTitles = [
-  'Celestial Refuge',
-  'Hearth of Echoes',
-  'Glassleaf Retreat',
-  'Moonwell Cloister',
-  'Lantern Hollow',
-  'Atlas Shrine',
-  'Quiet Observatory',
-  'Dawnkeeper Roost',
-  'Farsong Haven',
+  'Himmelsrefugium',
+  'Echoherd',
+  'Glaslaub-Rückzug',
+  'Mondbrunnen-Klause',
+  'Laternenhohlraum',
+  'Atlas-Schrein',
+  'Stilles Observatorium',
+  'Dämmerhorst',
+  'Fernklang-Hafen',
 ]
 
 const sanctuarySubtitles = [
-  'Hidden among the shifting wilds',
-  'A place where old routes stay visible',
-  'Pilgrims leave with clearer maps',
-  'Even silence glows brighter here',
+  'Versteckt zwischen wandernden Wildnissen',
+  'Ein Ort, an dem alte Routen sichtbar bleiben',
+  'Pilger ziehen mit klareren Karten weiter',
+  'Selbst die Stille leuchtet hier heller',
 ]
 
 function zeroResources(): ResourceMap {
@@ -152,65 +152,65 @@ function buildQuest(serial: number, biome: Biome, meteor: boolean): Quest {
     case 0:
       return {
         type: 'per-resource',
-        label: '2 Fame for each visible Uddu Stone.',
+        label: '2 Ruhm für jeden sichtbaren Uddu-Stein.',
         points: 2,
         resource: 'uddu',
       }
     case 1:
       return {
         type: 'per-resource',
-        label: '3 Fame for each visible Okiko Chimera.',
+        label: '3 Ruhm für jede sichtbare Okiko-Chimäre.',
         points: 3,
         resource: 'okiko',
       }
     case 2:
       return {
         type: 'per-resource',
-        label: '4 Fame for each visible Goldlog Thistle.',
+        label: '4 Ruhm für jede sichtbare Goldlog-Distel.',
         points: 4,
         resource: 'goldlog',
       }
     case 3:
       return {
         type: 'per-biome',
-        label: `4 Fame for each ${biomeNames[biome].short} card.`,
+        label: `4 Ruhm für jede ${biomeNames[biome].short}-Karte.`,
         points: 4,
         biomes: [biome],
       }
     case 4:
       return {
         type: 'per-biome',
-        label: `2 Fame for each ${biomeNames[biome].short} and ${biomeNames[adjacent].short} card.`,
+        label: `2 Ruhm für jede ${biomeNames[biome].short}- und ${biomeNames[adjacent].short}-Karte.`,
         points: 2,
         biomes: [biome, adjacent],
         prerequisite: {
           type: 'resource',
           resource: 'uddu',
           count: 1,
-          label: 'Requires at least 1 Uddu Stone.',
+          label: 'Benötigt mindestens 1 Uddu-Stein.',
         },
       }
     case 5:
       return {
         type: 'set',
-        label: '10 Fame for each set of 4 different biomes.',
+        label: '10 Ruhm für jedes Set aus 4 verschiedenen Biomen.',
         points: 10,
       }
     case 6:
       return {
         type: 'per-night',
-        label: '4 Fame for each nighttime card.',
+        label: '4 Ruhm für jede Nachtkarte.',
         points: 4,
         prerequisite: {
           type: 'clues',
           count: 2,
-          label: 'Requires at least 2 Clues.',
+          label: 'Benötigt mindestens 2 Spuren.',
         },
       }
     case 7:
       return {
         type: 'flat',
-        label: '12 Fame if you hold one of each wonder.',
+        label: '12 Ruhm, wenn du von jedem Wunder mindestens eins besitzt.',
         points: 12,
         prerequisite: {
           type: 'resources',
@@ -219,53 +219,53 @@ function buildQuest(serial: number, biome: Biome, meteor: boolean): Quest {
             { resource: 'okiko', count: 1 },
             { resource: 'goldlog', count: 1 },
           ],
-          label: 'Requires 1 Uddu, 1 Okiko and 1 Goldlog.',
+          label: 'Benötigt 1 Uddu, 1 Okiko und 1 Goldlog.',
         },
       }
     case 8:
       return {
         type: 'per-biome',
-        label: `3 Fame for each ${biomeNames[opposite].short} card.`,
+        label: `3 Ruhm für jede ${biomeNames[opposite].short}-Karte.`,
         points: 3,
         biomes: [opposite],
         prerequisite: {
           type: 'night',
           count: 2,
-          label: 'Requires at least 2 nighttime cards.',
+          label: 'Benötigt mindestens 2 Nachtkarten.',
         },
       }
     case 9:
       return {
         type: 'per-sanctuary',
-        label: '5 Fame for each Sanctuary.',
+        label: '5 Ruhm für jedes Refugium.',
         points: 5,
         prerequisite: {
           type: 'resource',
           resource: 'goldlog',
           count: 1,
-          label: 'Requires at least 1 Goldlog Thistle.',
+          label: 'Benötigt mindestens 1 Goldlog-Distel.',
         },
       }
     case 10:
       return {
         type: 'per-digit-match',
-        label: '3 Fame for each visible Region sharing this number digit.',
+        label: '3 Ruhm für jede sichtbare Region mit derselben Endziffer.',
         points: meteor ? 4 : 3,
         prerequisite: {
           type: 'clues',
           count: 1,
-          label: 'Requires at least 1 Clue.',
+          label: 'Benötigt mindestens 1 Spur.',
         },
       }
     default:
       return {
         type: 'flat',
-        label: '14 Fame if you have at least 2 Sanctuaries.',
+        label: '14 Ruhm, wenn du mindestens 2 Refugien besitzt.',
         points: meteor ? 16 : 14,
         prerequisite: {
           type: 'sanctuary',
           count: 2,
-          label: 'Requires at least 2 Sanctuaries.',
+          label: 'Benötigt mindestens 2 Refugien.',
         },
       }
   }
@@ -310,8 +310,8 @@ function buildRegionCard(serial: number, meteor = false): RegionCard {
     title,
     subtitle,
     flavor: meteor
-      ? 'A meteor streak tears the sky open and leaves hidden routes glowing.'
-      : 'The denizens remember every path differently from the way it was first walked.',
+      ? 'Ein Meteor reißt den Himmel auf und lässt verborgene Routen elektrisch nachglühen.'
+      : 'Die Bewohner erinnern sich an jeden Pfad anders, als er ursprünglich begangen wurde.',
     biome,
     duration,
     time,
@@ -329,20 +329,20 @@ function buildSanctuaryQuest(index: number, linkedBiome?: Biome): Quest | undefi
     case 0:
       return {
         type: 'per-resource',
-        label: '1 Fame for each visible Clue.',
+        label: '1 Ruhm für jede sichtbare Spur.',
         points: 1,
         resource: 'clue',
       }
     case 1:
       return {
         type: 'per-night',
-        label: '3 Fame for each nighttime card.',
+        label: '3 Ruhm für jede Nachtkarte.',
         points: 3,
       }
     case 2:
       return {
         type: 'per-sanctuary',
-        label: '4 Fame for each Sanctuary.',
+        label: '4 Ruhm für jedes Refugium.',
         points: 4,
       }
     case 3:
@@ -351,19 +351,19 @@ function buildSanctuaryQuest(index: number, linkedBiome?: Biome): Quest | undefi
       }
       return {
         type: 'per-biome',
-        label: `2 Fame for each ${biomeNames[linkedBiome].short} card.`,
+        label: `2 Ruhm für jede ${biomeNames[linkedBiome].short}-Karte.`,
         points: 2,
         biomes: [linkedBiome],
       }
     case 4:
       return {
         type: 'flat',
-        label: '8 Fame if you have at least 2 clues.',
+        label: '8 Ruhm, wenn du mindestens 2 Spuren besitzt.',
         points: 8,
         prerequisite: {
           type: 'clues',
           count: 2,
-          label: 'Requires at least 2 Clues.',
+          label: 'Benötigt mindestens 2 Spuren.',
         },
       }
     default:
@@ -382,7 +382,7 @@ function buildSanctuaryCard(index: number): SanctuaryCard {
     cardType: 'sanctuary',
     title: sanctuaryTitles[index % sanctuaryTitles.length],
     subtitle: sanctuarySubtitles[index % sanctuarySubtitles.length],
-    flavor: 'Cartographers leave these places with more certainty than they arrived with.',
+    flavor: 'Kartografen verlassen diese Orte mit mehr Gewissheit, als sie mitgebracht haben.',
     linkedBiome,
     clues: index % 5 === 0 ? 2 : index % 2 === 0 ? 1 : 0,
     bonusNight: index % 7 === 0 ? 1 : 0,

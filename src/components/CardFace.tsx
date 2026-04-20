@@ -14,6 +14,17 @@ interface CardFaceProps {
   onClick?: () => void
 }
 
+const rarityLabels = {
+  common: 'Gewoehnlich',
+  rare: 'Selten',
+  mythic: 'Mythisch',
+} as const
+
+const timeLabels = {
+  day: 'Tag',
+  night: 'Nacht',
+} as const
+
 function ResourceBadges({ card }: { card: RegionCard | SanctuaryCard }) {
   const tokens = Object.entries(card.resources).flatMap(([resource, count]) =>
     Array.from({ length: count }, (_, index) => (
@@ -34,7 +45,7 @@ function ResourceBadges({ card }: { card: RegionCard | SanctuaryCard }) {
       ...Array.from({ length: card.clues }, (_, index) => (
         <span className="token token-clue" key={`${card.id}-clue-${index}`}>
           <span className="token-sigil">CL</span>
-          Clue
+          Spur
         </span>
       )),
     )
@@ -45,13 +56,13 @@ function ResourceBadges({ card }: { card: RegionCard | SanctuaryCard }) {
       ...Array.from({ length: card.bonusNight }, (_, index) => (
         <span className="token token-night" key={`${card.id}-night-${index}`}>
           <span className="token-sigil">NT</span>
-          Night
+          Nacht
         </span>
       )),
     )
   }
 
-  return <div className="card-tokens">{tokens.length > 0 ? tokens : <span className="token token-empty">No icons</span>}</div>
+  return <div className="card-tokens">{tokens.length > 0 ? tokens : <span className="token token-empty">Keine Symbole</span>}</div>
 }
 
 export function CardFace({
@@ -89,18 +100,18 @@ export function CardFace({
     >
       <div className="card-glow" />
       <div className="card-topline">
-        <span className="card-type">{card.cardType === 'region' ? 'Region' : 'Sanctuary'}</span>
+        <span className="card-type">{card.cardType === 'region' ? 'Region' : 'Refugium'}</span>
         {'serial' in card ? <span className="card-serial">#{card.serial}</span> : null}
       </div>
 
       <div className="card-art-wrap">
         <div className="card-art-shell">
           <img
-            alt={card.cardType === 'region' ? `${card.title} biome artwork` : `${card.title} sanctuary artwork`}
+            alt={card.cardType === 'region' ? `${card.title} Biombild` : `${card.title} Refugiumsbild`}
             className="card-art-image"
             src={art}
           />
-          {'meteor' in card && card.meteor ? <span className="card-art-badge">Meteor Wake</span> : null}
+          {'meteor' in card && card.meteor ? <span className="card-art-badge">Meteorspur</span> : null}
         </div>
       </div>
 
@@ -112,11 +123,11 @@ export function CardFace({
         {'duration' in card ? (
           <div className="card-meta">
             <span className="card-duration">{card.duration}h</span>
-            <span className={`card-time card-time-${card.time}`}>{card.time}</span>
+            <span className={`card-time card-time-${card.time}`}>{timeLabels[card.time]}</span>
           </div>
         ) : (
           <div className="card-meta">
-            <span className="card-duration">{card.linkedBiome ? biomeMeta[card.linkedBiome].short : 'Wild'}</span>
+            <span className="card-duration">{card.linkedBiome ? biomeMeta[card.linkedBiome].short : 'Neutral'}</span>
           </div>
         )}
       </header>
@@ -127,26 +138,26 @@ export function CardFace({
             {biomeMeta[card.biome].short}
           </span>
           {card.meteor ? <span className="card-flag card-flag-meteor">Meteor</span> : null}
-          <span className={`card-flag card-flag-${card.rarity}`}>{card.rarity}</span>
+          <span className={`card-flag card-flag-${card.rarity}`}>{rarityLabels[card.rarity]}</span>
         </div>
       ) : (
         <div className="card-flags">
           {card.linkedBiome ? (
             <span className="card-flag" style={{ borderColor: biomeMeta[card.linkedBiome].accent }}>
-              Counts as {biomeMeta[card.linkedBiome].short}
+              Zaehlt als {biomeMeta[card.linkedBiome].short}
             </span>
           ) : (
-            <span className="card-flag">Freeform</span>
+            <span className="card-flag">Neutral</span>
           )}
-          <span className={`card-flag card-flag-${card.rarity}`}>{card.rarity}</span>
+          <span className={`card-flag card-flag-${card.rarity}`}>{rarityLabels[card.rarity]}</span>
         </div>
       )}
 
       <ResourceBadges card={card} />
 
       <section className="card-quest">
-        <strong>Quest</strong>
-        <p>{'quest' in card && card.quest ? card.quest.label : 'Adds support icons only.'}</p>
+        <strong>Auftrag</strong>
+        <p>{'quest' in card && card.quest ? card.quest.label : 'Liefert nur Stuetzsymbole.'}</p>
         {'quest' in card && card.quest?.prerequisite ? <span>{card.quest.prerequisite.label}</span> : null}
       </section>
 
