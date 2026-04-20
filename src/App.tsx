@@ -915,8 +915,10 @@ function App() {
     <main className="screen screen-game" data-phase={match.phase}>
       <div className="aurora aurora-a" />
       <div className="aurora aurora-b" />
-      {renderTopBar(match)}
-      <RulesDrawer open={rulesOpen} />
+      <div className="hud-head">
+        {renderTopBar(match)}
+        <RulesDrawer open={rulesOpen} />
+      </div>
 
       <section className="playfield">
         <div className="playfield-main">
@@ -926,7 +928,7 @@ function App() {
           {match.phase === 'draft' ? renderDraft(match, activeHuman ?? human) : null}
           {match.phase === 'finished' ? renderFinished(match) : null}
 
-          <section className="rivals-stack" style={{ gridTemplateColumns: playerGridColumns }}>
+          <section className="rivals-stack" data-count={match.players.length} style={{ gridTemplateColumns: playerGridColumns }}>
             {match.players.map((player) => (
               <PlayerRow
                 active={currentPlayer?.id === player.id && match.phase === 'draft'}
@@ -966,7 +968,7 @@ function App() {
           <div className="side-section">
             <span>Expeditionslog</span>
             <div className="log-list">
-              {match.log.slice(0, 5).map((entry) => (
+              {match.log.slice(0, 4).map((entry) => (
                 <p key={entry}>{entry}</p>
               ))}
             </div>
