@@ -45,6 +45,9 @@
   padding: 1rem;
   overflow: hidden;
   font-size: clamp(11px, 0.72vw, 15px);
+  background:
+    linear-gradient(180deg, rgba(3, 8, 16, 0.72), rgba(3, 8, 16, 0.88)),
+    url('./assets/ui/game-background.jpg') center/cover no-repeat;
 }
 
 .hero-shell {
@@ -64,12 +67,14 @@
 .player-row,
 .side-panel,
 .rules-drawer,
-.standing-panel {
+.standing-panel,
+.modal-panel {
   position: relative;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.01)),
     linear-gradient(135deg, rgba(55, 243, 255, 0.12), transparent 32%),
     linear-gradient(225deg, rgba(255, 79, 216, 0.12), transparent 24%),
+    url('./assets/ui/overlay-background.jpg') center/cover,
     var(--panel);
   border: 1px solid color-mix(in srgb, var(--line) 82%, rgba(255, 79, 216, 0.24));
   box-shadow:
@@ -85,7 +90,8 @@
 .hero-panel,
 .phase-panel,
 .player-row,
-.side-panel {
+.side-panel,
+.modal-panel {
   border-radius: 28px;
 }
 
@@ -100,6 +106,7 @@
     radial-gradient(circle at 88% 18%, rgba(255, 79, 216, 0.16), transparent 28%),
     radial-gradient(circle at bottom right, rgba(156, 255, 87, 0.12), transparent 32%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)),
+    url('./assets/ui/overlay-background.jpg') center/cover,
     var(--panel-strong);
 }
 
@@ -271,6 +278,10 @@
   gap: 0.65rem;
 }
 
+.field-avatar {
+  grid-column: 1 / -1;
+}
+
 .field input {
   width: 100%;
   background: rgba(6, 10, 18, 0.82);
@@ -279,6 +290,51 @@
   border-radius: 16px;
   padding: 0.75rem 0.9rem;
   box-shadow: inset 0 0 18px rgba(55, 243, 255, 0.05);
+}
+
+.avatar-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.avatar-choice {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 18px;
+  padding: 0.35rem;
+  display: grid;
+  gap: 0.32rem;
+  background:
+    linear-gradient(160deg, rgba(55, 243, 255, 0.08), transparent 32%),
+    linear-gradient(220deg, rgba(255, 79, 216, 0.08), transparent 40%),
+    rgba(8, 12, 22, 0.82);
+  color: inherit;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.avatar-choice:hover {
+  transform: translateY(-2px);
+}
+
+.avatar-choice.is-selected {
+  border-color: rgba(55, 243, 255, 0.5);
+  box-shadow: 0 0 0 1px rgba(55, 243, 255, 0.26), 0 18px 30px rgba(55, 243, 255, 0.1);
+}
+
+.avatar-choice-image {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.avatar-choice span {
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(227, 242, 255, 0.88);
 }
 
 .segment-row {
@@ -331,6 +387,8 @@
   gap: 0.55rem;
   font-size: clamp(9.5px, 0.62vw, 13.5px);
   background:
+    linear-gradient(180deg, rgba(4, 8, 16, 0.74), rgba(4, 7, 14, 0.92)),
+    url('./assets/ui/game-background.jpg') center/cover no-repeat fixed,
     radial-gradient(circle at top left, rgba(55, 243, 255, 0.09), transparent 30%),
     radial-gradient(circle at top right, rgba(255, 79, 216, 0.08), transparent 24%),
     linear-gradient(180deg, rgba(6, 10, 18, 0.92), rgba(4, 7, 14, 0.96));
@@ -425,6 +483,38 @@
     linear-gradient(135deg, rgba(55, 243, 255, 0.05), transparent 45%),
     rgba(7, 10, 18, 0.78);
   border: 1px solid rgba(55, 243, 255, 0.16);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background:
+    linear-gradient(180deg, rgba(3, 7, 14, 0.62), rgba(2, 6, 12, 0.84)),
+    radial-gradient(circle at top, rgba(55, 243, 255, 0.14), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(255, 79, 216, 0.18), transparent 34%);
+  backdrop-filter: blur(16px);
+}
+
+.modal-panel {
+  width: min(1180px, 100%);
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  padding: 0.9rem 1rem;
+  animation: panelLift 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.invite-join-modal {
+  width: min(920px, 100%);
+  display: grid;
+  gap: 0.9rem;
+}
+
+.modal-actions {
+  justify-content: end;
 }
 
 .playfield {
@@ -541,7 +631,9 @@
   border-radius: 17px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background:
+    radial-gradient(circle at var(--card-orbit, 50%) 8%, color-mix(in srgb, var(--card-secondary, #9aa2ff) 24%, transparent), transparent 30%),
     linear-gradient(145deg, rgba(55, 243, 255, 0.05), transparent 34%),
+    linear-gradient(210deg, color-mix(in srgb, var(--card-secondary, #9aa2ff) 16%, transparent), transparent 36%),
     radial-gradient(circle at top, color-mix(in srgb, var(--card-accent) 28%, transparent), transparent 46%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.01)),
     rgba(7, 11, 20, 0.94);
@@ -616,12 +708,36 @@
   background: rgba(255, 255, 255, 0.02);
 }
 
+.card-art-shell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(3, 6, 12, 0.08), transparent 32%, transparent 58%, rgba(2, 5, 10, 0.6)),
+    radial-gradient(circle at 16% 12%, color-mix(in srgb, var(--card-accent) 24%, transparent), transparent 24%),
+    radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--card-secondary, #9aa2ff) 22%, transparent), transparent 28%);
+  pointer-events: none;
+}
+
 .card-face.is-compact .card-art-shell {
   min-height: 0;
 }
 
 .card-face.is-minimal .card-art-shell {
   aspect-ratio: 16 / 9;
+}
+
+.card-face.is-minimal .card-art-description {
+  padding: 1.15rem 0.38rem 0.32rem;
+}
+
+.card-face.is-minimal .card-art-description strong {
+  font-size: 0.46rem;
+}
+
+.card-face.is-minimal .card-art-description span {
+  font-size: 0.46rem;
+  -webkit-line-clamp: 1;
 }
 
 .card-face.is-minimal .card-header {
@@ -670,6 +786,42 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.card-art-description {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: grid;
+  gap: 0.12rem;
+  padding: 1.6rem 0.5rem 0.45rem;
+  background: linear-gradient(180deg, transparent, rgba(4, 8, 16, 0.12) 24%, rgba(4, 8, 16, 0.86));
+  pointer-events: none;
+}
+
+.card-art-description strong,
+.card-art-description span {
+  display: -webkit-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+}
+
+.card-art-description strong {
+  color: rgba(244, 248, 255, 0.96);
+  font-size: 0.54rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  -webkit-line-clamp: 1;
+}
+
+.card-art-description span {
+  color: rgba(230, 242, 255, 0.78);
+  font-size: 0.54rem;
+  line-height: 1.18;
+  -webkit-line-clamp: 2;
 }
 
 .card-art-overlay {
@@ -971,7 +1123,7 @@
   gap: 0.55rem;
   min-height: 0;
   align-content: start;
-  grid-auto-rows: minmax(0, 1fr);
+  grid-auto-rows: auto;
 }
 
 .player-row {
@@ -1196,6 +1348,70 @@
   font-size: 0.56rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.player-inspect-modal {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.player-inspect-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.8rem;
+  align-items: start;
+}
+
+.player-inspect-id {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.player-inspect-id h2 {
+  margin: 0.12rem 0 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1.15rem, 2vw, 1.6rem);
+  text-transform: uppercase;
+}
+
+.player-inspect-id p {
+  margin: 0.28rem 0 0;
+  color: var(--text-soft);
+}
+
+.player-inspect-avatar {
+  width: 4.8rem;
+  height: 4.8rem;
+  border-radius: 22px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.24);
+}
+
+.player-inspect-metrics,
+.player-inspect-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.player-inspect-meta,
+.player-inspect-chipline,
+.player-inspect-section {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.inspect-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+  gap: 0.55rem;
+}
+
+.inspect-card-grid-sanctuaries {
+  grid-template-columns: repeat(auto-fit, minmax(178px, 1fr));
 }
 
 .strip-empty,
@@ -1495,6 +1711,14 @@
     grid-template-columns: 1fr;
   }
 
+  .avatar-picker-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .player-inspect-header {
+    grid-template-columns: 1fr;
+  }
+
   .screen-menu,
   .screen-game {
     overflow: auto;
@@ -1537,6 +1761,14 @@
     justify-content: start;
   }
 
+  .avatar-picker-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .modal-panel {
+    padding: 0.9rem;
+  }
+
   .card-grid,
   .compact-grid {
     grid-template-columns: 1fr;
@@ -1544,6 +1776,11 @@
 
   .route-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .inspect-card-grid,
+  .inspect-card-grid-sanctuaries {
+    grid-template-columns: 1fr;
   }
 }
 

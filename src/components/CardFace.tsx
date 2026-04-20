@@ -278,12 +278,21 @@ export function CardFace({
 }: CardFaceProps) {
   const biome = card.cardType === 'region' ? card.biome : card.linkedBiome
   const accent = biome ? biomeMeta[biome].accent : '#f4d79d'
+  const secondaryAccent =
+    card.cardType === 'region'
+      ? card.time === 'night'
+        ? '#9aa2ff'
+        : '#ffd786'
+      : card.rarity === 'rare'
+        ? '#b58cff'
+        : '#ffe29a'
   const art = getCardArt(card)
   const counters = buildCounterItems(card)
   const quest = 'quest' in card ? card.quest : undefined
   const questItems = buildQuestItems(quest)
   const prerequisiteItems = buildPrerequisiteItems(quest?.prerequisite)
   const questPoints = quest?.points ?? 0
+  const artDescription = card.cardType === 'region' ? card.quest.label : card.quest?.label ?? card.subtitle
   const artStats =
     card.cardType === 'region'
       ? [
@@ -315,7 +324,13 @@ export function CardFace({
     <button
       className={classes}
       onClick={onClick}
-      style={{ '--card-accent': accent } as CSSProperties}
+      style={
+        {
+          '--card-accent': accent,
+          '--card-secondary': secondaryAccent,
+          '--card-orbit': `${'serial' in card ? (card.serial * 13) % 100 : (card.title.length * 17) % 100}%`,
+        } as CSSProperties
+      }
       type="button"
     >
       <div className="card-glow" />
@@ -343,6 +358,10 @@ export function CardFace({
             {counters.slice(0, 3).map((item) => (
               <SymbolChip compact item={item} key={`${card.id}-overlay-${item.key}`} />
             ))}
+          </div>
+          <div className="card-art-description">
+            <strong>{card.subtitle}</strong>
+            <span>{artDescription}</span>
           </div>
           {'meteor' in card && card.meteor ? <span className="card-art-badge">Meteorspur</span> : null}
         </div>

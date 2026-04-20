@@ -20,6 +20,19 @@ import type {
 export const HUMAN_PLAYER_ID = 'player-0'
 export const PROFILE_KEY = 'faraway-atlas-profile'
 
+const DEFAULT_AVATAR_IDS = [
+  'cyber-01',
+  'cyber-02',
+  'cyber-03',
+  'cyber-04',
+  'cyber-05',
+  'cyber-06',
+  'cyber-07',
+  'cyber-08',
+  'cyber-09',
+  'cyber-10',
+]
+
 const AI_NAMES = ['Nyra Volt', 'Oren Kern', 'Mira Sol', 'Khepri Moos', 'Sable Rune', 'Tarin Voss']
 const GUEST_NAMES = ['Gast Eins', 'Gast Zwei', 'Gast Drei', 'Gast Vier', 'Gast Fünf']
 
@@ -612,6 +625,7 @@ function createPlayers(config: MatchConfig): PlayerState[] {
     ...Array.from({ length: config.humanCount }, (_, index) => ({
       id: `player-${index}`,
       name: index === 0 ? config.playerName.trim() || 'Erkunder' : GUEST_NAMES[index - 1] ?? `Gast ${index}`,
+      avatarId: index === 0 ? config.playerAvatarId : DEFAULT_AVATAR_IDS[(index + 1) % DEFAULT_AVATAR_IDS.length],
       kind: 'human' as const,
       difficulty: 'oracle' as const,
       hand: [],
@@ -623,6 +637,7 @@ function createPlayers(config: MatchConfig): PlayerState[] {
     ...Array.from({ length: config.aiCount }, (_, index) => ({
       id: `player-${index + config.humanCount}`,
       name: AI_NAMES[index],
+      avatarId: DEFAULT_AVATAR_IDS[(index + config.humanCount + 3) % DEFAULT_AVATAR_IDS.length],
       kind: 'ai' as const,
       difficulty: config.difficulty,
       hand: [],
@@ -1002,6 +1017,7 @@ export function getActiveHumanPlayer(state: MatchState) {
 export function defaultProfile() {
   return {
     playerName: 'Sinmy',
+    preferredAvatarId: 'cyber-01',
     preferredMode: 'classic' as const,
     preferredDifficulty: 'pathfinder' as const,
     preferredHumanCount: 1,

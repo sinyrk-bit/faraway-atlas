@@ -130,6 +130,7 @@ export type PlayCard = RegionCard | SanctuaryCard
 export interface PlayerState {
   id: string
   name: string
+  avatarId?: string
   kind: 'human' | 'ai'
   difficulty: Difficulty
   hand: RegionCard[]
@@ -180,6 +181,7 @@ export interface FinalStanding {
 export interface MatchConfig {
   mode: MatchMode
   playerName: string
+  playerAvatarId: string
   humanCount: number
   aiCount: number
   difficulty: Difficulty
@@ -215,6 +217,7 @@ export interface MatchState {
 
 export interface PersistedProfile {
   playerName: string
+  preferredAvatarId: string
   preferredMode: MatchMode
   preferredDifficulty: Difficulty
   preferredHumanCount: number

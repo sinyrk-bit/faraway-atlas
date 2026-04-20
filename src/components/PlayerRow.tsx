@@ -45,7 +45,7 @@ export function PlayerRow({
 }: PlayerRowProps) {
   const resourceTotals = totals(player)
   const routeSlots = Array.from({ length: 8 }, (_, index) => player.tableau[index] ?? null)
-  const avatar = getAvatarForPlayer(player.id)
+  const avatar = getAvatarForPlayer(player.id, player.avatarId)
   const latestRoute = player.tableau.at(-1)
 
   return (
@@ -71,7 +71,7 @@ export function PlayerRow({
                 <h2>{player.name}</h2>
               </div>
             </div>
-            <span className="player-toggle-state">{expanded ? 'Karten verbergen' : 'Karten zeigen'}</span>
+            <span className="player-toggle-state">{expanded ? 'Aktiver Bereich' : 'Details ansehen'}</span>
           </button>
         ) : (
           <div className="player-id-block">

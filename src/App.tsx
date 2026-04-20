@@ -1,7 +1,9 @@
 import { startTransition, useCallback, useEffect, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import './App.css'
+import { AvatarPicker } from './components/AvatarPicker'
 import { CardFace } from './components/CardFace'
+import { PlayerInspectModal } from './components/PlayerInspectModal'
 import { PlayerRow } from './components/PlayerRow'
 import { AtlasAudioEngine } from './game/audio'
 import { difficultyMeta, modeMeta } from './game/content'
@@ -27,6 +29,7 @@ import {
   setHumanDraftSelection,
   standingsSummary,
 } from './game/engine'
+import { availableAvatars } from './game/visuals'
 import type {
   Difficulty,
   DraftSelection,
@@ -88,6 +91,15 @@ function readInviteProfilePatch() {
   }
 }
 
+function hasInviteContext() {
+  if (typeof window === 'undefined') {
+    return false
+  }
+
+  const params = new URLSearchParams(window.location.search)
+  return params.get('invite') === '1'
+}
+
 function loadProfile(): PersistedProfile {
   if (typeof window === 'undefined') {
     return defaultProfile()
@@ -133,6 +145,7 @@ function buildInviteUrl(profile: PersistedProfile) {
   }
 
   const url = new URL(window.location.href)
+  url.searchParams.set('invite', '1')
   url.searchParams.set('mode', profile.preferredMode)
   url.searchParams.set('difficulty', profile.preferredDifficulty)
   url.searchParams.set('players', String(profile.preferredTotalPlayers))
@@ -280,6 +293,9 @@ function App() {
   const [focusedStandingEntry, setFocusedStandingEntry] = useState(0)
   const [inspectedPlayerId, setInspectedPlayerId] = useState<string | null>(null)
   const [inviteStatus, setInviteStatus] = useState('')
+  const [invitePromptOpen, setInvitePromptOpen] = useState(() => hasInviteContext())
+  const [pendingInviteName, setPendingInviteName] = useState(() => loadProfile().playerName ?? 'Erkunder')
+  const [pendingInviteAvatarId, setPendingInviteAvatarId] = useState(() => loadProfile().preferredAvatarId ?? availableAvatars[0].id)
   const [audioEngine] = useState(() => new AtlasAudioEngine())
   const previousMatchRef = useRef<MatchSnapshot | null>(null)
 
@@ -294,6 +310,27 @@ function App() {
   useEffect(() => {
     audioEngine.setEnabled(profile.soundEnabled)
   }, [audioEngine, profile.soundEnabled])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') {
+        return
+      }
+
+      if (inspectedPlayerId) {
+        setInspectedPlayerId(null)
+      } else if (invitePromptOpen) {
+        setInvitePromptOpen(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [inspectedPlayerId, invitePromptOpen])
 
   useEffect(() => {
     if (!match || match.phase !== 'draft') {
@@ -377,12 +414,12 @@ function App() {
   const humanDraftSelection = match?.humanDraftSelection ?? {}
   const dailySummary = standingsSummary(standings)
   const pinnedPlayerId = viewedHuman?.id ?? human?.id ?? null
-  const visibleInspectedPlayerId =
-    match && inspectedPlayerId && inspectedPlayerId !== pinnedPlayerId && match.players.some((player) => player.id === inspectedPlayerId)
-      ? inspectedPlayerId
+  const inspectedPlayer =
+    match && inspectedPlayerId && inspectedPlayerId !== pinnedPlayerId
+      ? match.players.find((player) => player.id === inspectedPlayerId) ?? null
       : null
   const playerGridColumns = match
-    ? match.players.length <= 3
+    ? match.players.length <= 4
       ? '1fr'
       : 'repeat(2, minmax(0, 1fr))'
     : '1fr'
@@ -394,6 +431,26 @@ function App() {
     }))
   }
 
+  function confirmInviteProfile() {
+    const safeName = pendingInviteName.trim() || 'Erkunder'
+
+    patchProfile({
+      playerName: safeName,
+      preferredAvatarId: pendingInviteAvatarId,
+    })
+
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      url.searchParams.delete('invite')
+      window.history.replaceState({}, '', url.toString())
+    }
+
+    playSound('lock')
+    setInvitePromptOpen(false)
+    setInviteStatus('Profil fuer diesen Tisch gesetzt.')
+    window.setTimeout(() => setInviteStatus(''), 1800)
+  }
+
   function startMatch(modeOverride?: MatchMode) {
     const mode = modeOverride ?? profile.preferredMode
     const totalPlayers = Math.min(6, Math.max(2, profile.preferredTotalPlayers))
@@ -401,6 +458,7 @@ function App() {
     const config: MatchConfig = {
       mode,
       playerName: profile.playerName || 'Erkunder',
+      playerAvatarId: profile.preferredAvatarId,
       humanCount,
       aiCount: totalPlayers - humanCount,
       difficulty: profile.preferredDifficulty,
@@ -504,6 +562,18 @@ function App() {
                   value={profile.playerName}
                 />
               </label>
+
+              <div className="field field-avatar">
+                <span>Avatar-Signatur</span>
+                <AvatarPicker
+                  onSelect={(avatarId) => {
+                    playSound('tap')
+                    patchProfile({ preferredAvatarId: avatarId })
+                  }}
+                  selectedId={profile.preferredAvatarId}
+                />
+                <p className="field-hint">Wird fuer deinen Sitz und fuer geteilte Tischlinks verwendet.</p>
+              </div>
 
               <label className="field">
                 <span>Seed-Code</span>
@@ -611,6 +681,56 @@ function App() {
             </div>
           </div>
         </section>
+
+        {invitePromptOpen ? (
+          <div aria-modal="true" className="modal-backdrop" role="dialog">
+            <section className="modal-panel invite-join-modal">
+              <div className="phase-copy">
+                <span className="phase-tag">Freundesitz verbinden</span>
+                <h2>Wie soll dein Platz an diesem Tisch heissen?</h2>
+                <p>Waehle deinen Namen und ein Avatar-Signet, bevor du den geteilten Atlas betrittst.</p>
+              </div>
+
+              <label className="field">
+                <span>Dein Name</span>
+                <input
+                  autoFocus
+                  maxLength={20}
+                  onChange={(event) => setPendingInviteName(event.target.value)}
+                  placeholder="Erkunder"
+                  value={pendingInviteName}
+                />
+              </label>
+
+              <div className="field field-avatar">
+                <span>Avatar waehlen</span>
+                <AvatarPicker
+                  onSelect={(avatarId) => {
+                    playSound('tap')
+                    setPendingInviteAvatarId(avatarId)
+                  }}
+                  selectedId={pendingInviteAvatarId}
+                />
+              </div>
+
+              <div className="phase-actions modal-actions">
+                <button className="primary-button" onClick={confirmInviteProfile} type="button">
+                  Profil uebernehmen
+                </button>
+                <button
+                  className="ghost-button"
+                  onClick={() => {
+                    playSound('tap')
+                    setInvitePromptOpen(false)
+                  }}
+                  type="button"
+                >
+                  Spaeter
+                </button>
+              </div>
+            </section>
+          </div>
+        ) : null}
       </main>
     )
   }
@@ -940,15 +1060,15 @@ function App() {
                   active={currentPlayer?.id === player.id && match.phase === 'draft'}
                   collapsible={player.id !== pinnedPlayerId}
                   echoDigits={getPlayerDigitEchoes(player, match.config.mode)}
-                  expanded={player.id === pinnedPlayerId || player.id === visibleInspectedPlayerId}
-                  highlighted={player.id === visibleInspectedPlayerId}
+                  expanded={player.id === pinnedPlayerId}
+                  highlighted={player.id === inspectedPlayerId}
                   human={player.kind === 'human'}
                   key={player.id}
                   onToggle={
                     player.id !== pinnedPlayerId
                       ? () => {
                           playSound('tap')
-                          setInspectedPlayerId((current) => (current === player.id ? null : player.id))
+                          setInspectedPlayerId(player.id)
                         }
                       : undefined
                   }
@@ -1004,6 +1124,15 @@ function App() {
           </div>
         </aside>
       </section>
+
+      {inspectedPlayer ? (
+        <PlayerInspectModal
+          echoDigits={getPlayerDigitEchoes(inspectedPlayer, match.config.mode)}
+          mode={match.config.mode}
+          onClose={() => setInspectedPlayerId(null)}
+          player={inspectedPlayer}
+        />
+      ) : null}
     </main>
   )
 }
