@@ -48,6 +48,12 @@ type MatchSnapshot = {
   activeHumanPlayerId?: string
 }
 
+type PhaseAnnouncement = {
+  token: string
+  title: string
+  detail: string
+}
+
 const phaseLabels: Record<MatchState['phase'], string> = {
   'opening-hand': 'Auftakthand',
   'choose-region': 'Routenwahl',
@@ -61,6 +67,12 @@ const timeLabels = {
   day: 'Tag',
   night: 'Nacht',
 } as const
+
+const modeCinematicLine: Record<MatchMode, string> = {
+  classic: 'Acht Runden. Eine makellose Route. Kein zweiter Versuch.',
+  advanced: 'Mehr Auftakt, mehr Druck, mehr Raum fuer praezise Perfektion.',
+  starfall: 'Meteore bleiben sichtbar und jede Endziffer kann das Endspiel kippen.',
+}
 
 function readInviteProfilePatch() {
   if (typeof window === 'undefined') {
@@ -279,6 +291,47 @@ function StandingPanel({
   )
 }
 
+function buildPhaseAnnouncement(match: MatchState, activeName?: string): PhaseAnnouncement {
+  switch (match.phase) {
+    case 'opening-hand':
+      return {
+        token: `opening-${match.round}-${match.activeHumanPlayerId ?? 'none'}`,
+        title: 'Auftaktsequenz',
+        detail: `${activeName ?? 'Der aktive Platz'} kalibriert die Startregionen fuer Runde ${match.round}.`,
+      }
+    case 'choose-region':
+      return {
+        token: `choose-${match.round}-${match.activeHumanPlayerId ?? 'none'}`,
+        title: `Runde ${match.round} · Routenwahl`,
+        detail: `${activeName ?? 'Der aktive Platz'} plant den naechsten Vorstoss durch ${modeMeta[match.config.mode].title}.`,
+      }
+    case 'reveal':
+      return {
+        token: `reveal-${match.round}-${match.revealEntries.length}`,
+        title: 'Synchrones Aufdecken',
+        detail: 'Die Tischreihenfolge enthuellt sich jetzt in Tempoabstufungen.',
+      }
+    case 'draft':
+      return {
+        token: `draft-${match.round}-${match.draftIndex}`,
+        title: 'Marktfreigabe',
+        detail: `${activeName ?? 'Der aktuelle Platz'} kontrolliert den naechsten Premium-Pick.`,
+      }
+    case 'finished':
+      return {
+        token: `finished-${match.round}`,
+        title: 'Atlas abgeschlossen',
+        detail: 'Rueckwaertswertung, Refugien und Meteorechos haben das Endspiel beschlossen.',
+      }
+    default:
+      return {
+        token: `phase-${match.phase}-${match.round}`,
+        title: phaseLabels[match.phase],
+        detail: 'Die Expeditionslage wird neu berechnet.',
+      }
+  }
+}
+
 function App() {
   const todaySeed = useTodaySeed()
   const [profile, setProfile] = useState<PersistedProfile>(() => {
@@ -296,6 +349,7 @@ function App() {
   const [invitePromptOpen, setInvitePromptOpen] = useState(() => hasInviteContext())
   const [pendingInviteName, setPendingInviteName] = useState(() => loadProfile().playerName ?? 'Erkunder')
   const [pendingInviteAvatarId, setPendingInviteAvatarId] = useState(() => loadProfile().preferredAvatarId ?? availableAvatars[0].id)
+  const [phaseAnnouncement, setPhaseAnnouncement] = useState<PhaseAnnouncement | null>(null)
   const [audioEngine] = useState(() => new AtlasAudioEngine())
   const previousMatchRef = useRef<MatchSnapshot | null>(null)
 
@@ -310,6 +364,18 @@ function App() {
   useEffect(() => {
     audioEngine.setEnabled(profile.soundEnabled)
   }, [audioEngine, profile.soundEnabled])
+
+  useEffect(() => {
+    if (!phaseAnnouncement) {
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      setPhaseAnnouncement((current) => (current?.token === phaseAnnouncement.token ? null : current))
+    }, 2200)
+
+    return () => window.clearTimeout(timer)
+  }, [phaseAnnouncement])
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -377,9 +443,14 @@ function App() {
       activeHumanPlayerId: match.activeHumanPlayerId,
     }
     const previousSnapshot = previousMatchRef.current
+    const activeName =
+      (match.phase === 'opening-hand' || match.phase === 'choose-region'
+        ? getActiveHumanPlayer(match)?.name
+        : getCurrentPlayer(match)?.name) ?? getHumanPlayer(match)?.name
 
     if (previousSnapshot) {
       if (previousSnapshot.phase !== match.phase) {
+        setPhaseAnnouncement(buildPhaseAnnouncement(match, activeName))
         if (match.phase === 'reveal') {
           playSound('reveal')
         } else if (match.phase === 'draft') {
@@ -396,9 +467,14 @@ function App() {
         (match.phase === 'opening-hand' || match.phase === 'choose-region')
       ) {
         playSound('turn')
+        setPhaseAnnouncement(buildPhaseAnnouncement(match, activeName))
       } else if (previousSnapshot.revealCount !== match.revealEntries.length && match.phase === 'reveal') {
         playSound('reveal')
+      } else if (previousSnapshot.round !== match.round) {
+        setPhaseAnnouncement(buildPhaseAnnouncement(match, activeName))
       }
+    } else {
+      setPhaseAnnouncement(buildPhaseAnnouncement(match, activeName))
     }
 
     previousMatchRef.current = currentSnapshot
@@ -423,6 +499,27 @@ function App() {
       ? '1fr'
       : 'repeat(2, minmax(0, 1fr))'
     : '1fr'
+  const tacticalObjective = !match
+    ? ''
+    : match.phase === 'opening-hand'
+      ? 'Waehle eine perfekt skalierte Auftakthand und halte die Flex-Kurve offen.'
+      : match.phase === 'choose-region'
+        ? 'Optimiere Tempo gegen Refugiumszugriff und spiele nicht blind auf kurze Dauer.'
+        : match.phase === 'reveal'
+          ? 'Lies die Reihenfolge, bevor der Markt aufspringt, und plane den Premium-Pick.'
+          : match.phase === 'draft'
+            ? 'Sichere die beste Region fuer dein Endspielfenster und verliere keine Refugiumswerte.'
+            : match.phase === 'finished'
+              ? 'Analysiere die Rueckwaertswertung und justiere die naechste Revanche.'
+              : ''
+  const commandRailItems = !match
+    ? []
+    : [
+        { label: 'Aktiver Platz', value: activeHuman?.name ?? currentPlayer?.name ?? human?.name ?? 'Tisch bereit' },
+        { label: 'Ziel', value: tacticalObjective },
+        { label: 'Markt', value: `${match.market.length} offen` },
+        { label: 'Echo', value: humanEchoDigits.length > 0 ? humanEchoDigits.join(' · ') : 'Keine' },
+      ]
 
   function patchProfile(patch: Partial<PersistedProfile>) {
     setProfile((current) => ({
@@ -513,6 +610,23 @@ function App() {
             <p className="hero-text">
               Eine kompakte Browser-Edition im dunklen Neon-Look mit Rueckwaertswertung, Refugium-Ketten, mehreren Varianten und KI-Rivalen fuer direkte Live-Tests.
             </p>
+            <div className="hero-signal-row">
+              <article className="hero-signal-card">
+                <span>Direktorat</span>
+                <strong>Atlas Command</strong>
+                <p>Hochverdichtete Tabletop-Inszenierung mit taktischer Neon-Praesenz.</p>
+              </article>
+              <article className="hero-signal-card">
+                <span>Tischsetup</span>
+                <strong>{profile.preferredTotalPlayers} Plaetze · {profile.preferredHumanCount} Mensch</strong>
+                <p>{modeCinematicLine[profile.preferredMode]}</p>
+              </article>
+              <article className="hero-signal-card">
+                <span>Freundesitz</span>
+                <strong>{profile.playerName || 'Erkunder'} online</strong>
+                <p>Invite-Link, Avatarwahl und kompakte Gegnerinspektion bereits aktiv.</p>
+              </article>
+            </div>
             <div className="hero-actions">
               <button className="primary-button" onClick={() => startMatch()} type="button">
                 Expedition starten
@@ -677,6 +791,24 @@ function App() {
                 >
                   {profile.soundEnabled ? 'An' : 'Aus'}
                 </button>
+              </article>
+            </div>
+
+            <div className="feature-rail">
+              <article className="feature-card">
+                <span>Premium HUD</span>
+                <strong>Command Rail</strong>
+                <p>Ziel, aktiver Platz, Marktfenster und Meteorechos bleiben sofort lesbar.</p>
+              </article>
+              <article className="feature-card">
+                <span>Match-Regie</span>
+                <strong>Phase Marquee</strong>
+                <p>Filmische Phasenbanner rahmen jede wichtige Eskalation ohne den Tisch zu blockieren.</p>
+              </article>
+              <article className="feature-card">
+                <span>Intel Layer</span>
+                <strong>Rivalen-Inspect</strong>
+                <p>Alle gegnerischen Infos liegen hinter einem sauberen Detailfenster statt im Haupt-HUD.</p>
               </article>
             </div>
           </div>
@@ -1041,9 +1173,18 @@ function App() {
     <main className="screen screen-game" data-phase={match.phase}>
       <div className="aurora aurora-a" />
       <div className="aurora aurora-b" />
+      <div className="noise-layer" />
       <div className="hud-head">
         {renderTopBar(match)}
         <RulesDrawer open={rulesOpen} />
+        <section className="command-rail">
+          {commandRailItems.map((item) => (
+            <article className="command-card" key={item.label}>
+              <span>{item.label}</span>
+              <strong>{item.value}</strong>
+            </article>
+          ))}
+        </section>
       </div>
 
       <section className="playfield">
@@ -1132,6 +1273,14 @@ function App() {
           onClose={() => setInspectedPlayerId(null)}
           player={inspectedPlayer}
         />
+      ) : null}
+
+      {phaseAnnouncement ? (
+        <div className="phase-marquee">
+          <span>{phaseLabels[match.phase]}</span>
+          <strong>{phaseAnnouncement.title}</strong>
+          <p>{phaseAnnouncement.detail}</p>
+        </div>
       ) : null}
     </main>
   )
