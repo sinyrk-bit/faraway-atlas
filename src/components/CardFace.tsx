@@ -1,4 +1,11 @@
 import type { CSSProperties } from 'react'
+import clueIcon from '../assets/icons/clue-icon.jpg'
+import goldlogIcon from '../assets/icons/goldlog-icon.jpg'
+import meteorIcon from '../assets/icons/meteor-icon.jpg'
+import nightIcon from '../assets/icons/night-icon.jpg'
+import okikoIcon from '../assets/icons/okiko-icon.jpg'
+import sanctuaryIcon from '../assets/icons/sanctuary-icon.jpg'
+import udduIcon from '../assets/icons/uddu-icon.jpg'
 import { biomeMeta, resourceMeta } from '../game/content'
 import { getCardArt } from '../game/visuals'
 import type { Biome, PlayCard, Prerequisite, Quest, RegionCard, ResourceType, SanctuaryCard } from '../game/types'
@@ -26,6 +33,18 @@ const timeLabels = {
   night: 'Nacht',
 } as const
 
+type IconArtKey = 'uddu' | 'okiko' | 'goldlog' | 'clue' | 'night' | 'sanctuary' | 'meteor'
+
+const iconArt: Record<IconArtKey, string> = {
+  uddu: udduIcon,
+  okiko: okikoIcon,
+  goldlog: goldlogIcon,
+  clue: clueIcon,
+  night: nightIcon,
+  sanctuary: sanctuaryIcon,
+  meteor: meteorIcon,
+}
+
 const biomeSigils: Record<Biome, string> = {
   river: 'KN',
   city: 'ST',
@@ -34,12 +53,12 @@ const biomeSigils: Record<Biome, string> = {
 }
 
 const iconMeta = {
-  uddu: { glyph: 'UD', accent: resourceMeta.uddu.accent, label: 'Uddu' },
-  okiko: { glyph: 'OK', accent: resourceMeta.okiko.accent, label: 'Okiko' },
-  goldlog: { glyph: 'GL', accent: resourceMeta.goldlog.accent, label: 'Goldlog' },
-  clue: { glyph: 'CL', accent: '#9eeaff', label: 'Spur' },
-  night: { glyph: 'NT', accent: '#93a2ff', label: 'Nacht' },
-  sanctuary: { glyph: 'RF', accent: '#ffd78d', label: 'Refugium' },
+  uddu: { glyph: 'UD', accent: resourceMeta.uddu.accent, label: 'Uddu', iconKey: 'uddu' as const },
+  okiko: { glyph: 'OK', accent: resourceMeta.okiko.accent, label: 'Okiko', iconKey: 'okiko' as const },
+  goldlog: { glyph: 'GL', accent: resourceMeta.goldlog.accent, label: 'Goldlog', iconKey: 'goldlog' as const },
+  clue: { glyph: 'CL', accent: '#9eeaff', label: 'Spur', iconKey: 'clue' as const },
+  night: { glyph: 'NT', accent: '#93a2ff', label: 'Nacht', iconKey: 'night' as const },
+  sanctuary: { glyph: 'RF', accent: '#ffd78d', label: 'Refugium', iconKey: 'sanctuary' as const },
   digit: { glyph: '##', accent: '#ffd85f', label: 'Endziffer' },
   set: { glyph: 'S4', accent: '#9dff9a', label: 'Viererset' },
   flat: { glyph: 'FX', accent: '#f2f6ff', label: 'Fixwert' },
@@ -51,6 +70,7 @@ type SymbolItem = {
   label: string
   accent: string
   value?: number | string
+  iconKey?: IconArtKey
 }
 
 function buildBiomeItem(biome: Biome): SymbolItem {
@@ -69,6 +89,7 @@ function buildResourceItem(resource: ResourceType, count: number): SymbolItem {
     label: iconMeta[resource].label,
     accent: iconMeta[resource].accent,
     value: count,
+    iconKey: iconMeta[resource].iconKey,
   }
 }
 
@@ -84,6 +105,7 @@ function buildCounterItems(card: RegionCard | SanctuaryCard) {
       label: iconMeta.clue.label,
       accent: iconMeta.clue.accent,
       value: card.clues,
+      iconKey: iconMeta.clue.iconKey,
     })
   }
 
@@ -94,6 +116,7 @@ function buildCounterItems(card: RegionCard | SanctuaryCard) {
       label: iconMeta.night.label,
       accent: iconMeta.night.accent,
       value: card.bonusNight,
+      iconKey: iconMeta.night.iconKey,
     })
   }
 
@@ -113,6 +136,7 @@ function buildQuestItems(quest?: Quest) {
           glyph: iconMeta[quest.resource].glyph,
           label: iconMeta[quest.resource].label,
           accent: iconMeta[quest.resource].accent,
+          iconKey: iconMeta[quest.resource].iconKey,
         },
       ]
     case 'per-biome':
@@ -133,6 +157,7 @@ function buildQuestItems(quest?: Quest) {
           glyph: iconMeta.night.glyph,
           label: iconMeta.night.label,
           accent: iconMeta.night.accent,
+          iconKey: iconMeta.night.iconKey,
         },
       ]
     case 'per-sanctuary':
@@ -142,6 +167,7 @@ function buildQuestItems(quest?: Quest) {
           glyph: iconMeta.sanctuary.glyph,
           label: iconMeta.sanctuary.label,
           accent: iconMeta.sanctuary.accent,
+          iconKey: iconMeta.sanctuary.iconKey,
         },
       ]
     case 'per-digit-match':
@@ -181,6 +207,7 @@ function buildPrerequisiteItems(prerequisite?: Prerequisite) {
           label: iconMeta[prerequisite.resource].label,
           accent: iconMeta[prerequisite.resource].accent,
           value: prerequisite.count,
+          iconKey: iconMeta[prerequisite.resource].iconKey,
         },
       ]
     case 'resources':
@@ -190,6 +217,7 @@ function buildPrerequisiteItems(prerequisite?: Prerequisite) {
         label: iconMeta[entry.resource].label,
         accent: iconMeta[entry.resource].accent,
         value: entry.count,
+        iconKey: iconMeta[entry.resource].iconKey,
       }))
     case 'clues':
       return [
@@ -199,6 +227,7 @@ function buildPrerequisiteItems(prerequisite?: Prerequisite) {
           label: iconMeta.clue.label,
           accent: iconMeta.clue.accent,
           value: prerequisite.count,
+          iconKey: iconMeta.clue.iconKey,
         },
       ]
     case 'night':
@@ -209,6 +238,7 @@ function buildPrerequisiteItems(prerequisite?: Prerequisite) {
           label: iconMeta.night.label,
           accent: iconMeta.night.accent,
           value: prerequisite.count,
+          iconKey: iconMeta.night.iconKey,
         },
       ]
     case 'biome':
@@ -227,6 +257,7 @@ function buildPrerequisiteItems(prerequisite?: Prerequisite) {
           label: iconMeta.sanctuary.label,
           accent: iconMeta.sanctuary.accent,
           value: prerequisite.count,
+          iconKey: iconMeta.sanctuary.iconKey,
         },
       ]
     default:
@@ -241,7 +272,9 @@ function SymbolChip({ item, compact = false }: { item: SymbolItem; compact?: boo
       style={{ '--symbol-accent': item.accent } as CSSProperties}
       title={item.value !== undefined ? `${item.label} ${item.value}` : item.label}
     >
-      <span className="symbol-chip-sigil">{item.glyph}</span>
+      <span className="symbol-chip-sigil">
+        {item.iconKey ? <img alt="" className="symbol-chip-icon" src={iconArt[item.iconKey]} /> : item.glyph}
+      </span>
       {item.value !== undefined ? <span className="symbol-chip-value">{item.value}</span> : null}
       {!compact ? <span className="symbol-chip-label">{item.label}</span> : null}
     </span>

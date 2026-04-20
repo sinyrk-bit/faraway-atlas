@@ -4,7 +4,6 @@ import './App.css'
 import { AvatarPicker } from './components/AvatarPicker'
 import { CardFace } from './components/CardFace'
 import { PlayerInspectModal } from './components/PlayerInspectModal'
-import { PlayerRow } from './components/PlayerRow'
 import { AtlasAudioEngine } from './game/audio'
 import { difficultyMeta, modeMeta } from './game/content'
 import {
@@ -29,7 +28,7 @@ import {
   setHumanDraftSelection,
   standingsSummary,
 } from './game/engine'
-import { availableAvatars } from './game/visuals'
+import { availableAvatars, getAvatarForPlayer } from './game/visuals'
 import type {
   Difficulty,
   DraftSelection,
@@ -332,6 +331,16 @@ function buildPhaseAnnouncement(match: MatchState, activeName?: string): PhaseAn
   }
 }
 
+function buildPlayerStatusLine(player: PlayerState) {
+  const latestRoute = player.tableau.at(-1)
+
+  if (!latestRoute) {
+    return 'Noch keine gespielte Region.'
+  }
+
+  return `Letzte Karte #${latestRoute.serial} · ${latestRoute.duration}h · ${latestRoute.title}`
+}
+
 function App() {
   const todaySeed = useTodaySeed()
   const [profile, setProfile] = useState<PersistedProfile>(() => {
@@ -489,16 +498,10 @@ function App() {
   const selectedHandCard = activeHuman?.hand.find((card) => card.id === match?.selectedRegionId)
   const humanDraftSelection = match?.humanDraftSelection ?? {}
   const dailySummary = standingsSummary(standings)
-  const pinnedPlayerId = viewedHuman?.id ?? human?.id ?? null
   const inspectedPlayer =
-    match && inspectedPlayerId && inspectedPlayerId !== pinnedPlayerId
+    match && inspectedPlayerId
       ? match.players.find((player) => player.id === inspectedPlayerId) ?? null
       : null
-  const playerGridColumns = match
-    ? match.players.length <= 4
-      ? '1fr'
-      : 'repeat(2, minmax(0, 1fr))'
-    : '1fr'
   const tacticalObjective = !match
     ? ''
     : match.phase === 'opening-hand'
@@ -1218,32 +1221,55 @@ function App() {
           {match.phase === 'reveal' ? renderReveal(match) : null}
           {match.phase === 'draft' ? renderDraft(match, activeHuman ?? human) : null}
           {match.phase === 'finished' ? renderFinished(match) : null}
-
-            <section className="rivals-stack" data-count={match.players.length} style={{ gridTemplateColumns: playerGridColumns }}>
-              {match.players.map((player) => (
-                <PlayerRow
-                  active={currentPlayer?.id === player.id && match.phase === 'draft'}
-                  collapsible={player.id !== pinnedPlayerId}
-                  echoDigits={getPlayerDigitEchoes(player, match.config.mode)}
-                  expanded={player.id === pinnedPlayerId}
-                  highlighted={player.id === inspectedPlayerId}
-                  human={player.kind === 'human'}
-                  key={player.id}
-                  onToggle={
-                    player.id !== pinnedPlayerId
-                      ? () => {
-                          playSound('tap')
-                          setInspectedPlayerId(player.id)
-                        }
-                      : undefined
-                  }
-                  player={player}
-                />
-              ))}
-            </section>
         </div>
 
         <aside className="side-panel">
+          <div className="side-section">
+            <span>Tischuebersicht</span>
+            <div className="roster-list">
+              {match.players.map((player) => {
+                const avatar = getAvatarForPlayer(player.id, player.avatarId)
+                const isActiveSeat =
+                  (match.phase === 'draft' && currentPlayer?.id === player.id) ||
+                  ((match.phase === 'opening-hand' || match.phase === 'choose-region') && activeHuman?.id === player.id)
+
+                return (
+                  <button
+                    className={[
+                      'roster-entry',
+                      player.kind === 'human' ? 'is-human' : '',
+                      isActiveSeat ? 'is-active' : '',
+                      inspectedPlayerId === player.id ? 'is-highlighted' : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                    key={player.id}
+                    onClick={() => {
+                      playSound('tap')
+                      setInspectedPlayerId((current) => (current === player.id ? null : player.id))
+                    }}
+                    type="button"
+                  >
+                    <img alt={`${player.name} avatar`} className="roster-avatar" src={avatar} />
+                    <div className="roster-copy">
+                      <div className="roster-headline">
+                        <span>{player.kind === 'human' ? 'Platz' : 'Rivale'}</span>
+                        <strong>{player.name}</strong>
+                      </div>
+                      <div className="roster-stats">
+                        <span>R {player.tableau.length}/8</span>
+                        <span>S {player.sanctuaries.length}</span>
+                        <span>Ruhm {player.scorePreview}</span>
+                      </div>
+                      <p>{buildPlayerStatusLine(player)}</p>
+                    </div>
+                    <span className="roster-cta">Details</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
           <div className="side-section">
             <span>Marktpuls</span>
             <div className="market-mini-list">
