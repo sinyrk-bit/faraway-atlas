@@ -278,6 +278,7 @@ function App() {
   const [match, setMatch] = useState<MatchState | null>(null)
   const [rulesOpen, setRulesOpen] = useState(false)
   const [focusedStandingEntry, setFocusedStandingEntry] = useState(0)
+  const [inspectedPlayerId, setInspectedPlayerId] = useState<string | null>(null)
   const [inviteStatus, setInviteStatus] = useState('')
   const [audioEngine] = useState(() => new AtlasAudioEngine())
   const previousMatchRef = useRef<MatchSnapshot | null>(null)
@@ -375,12 +376,15 @@ function App() {
   const selectedHandCard = activeHuman?.hand.find((card) => card.id === match?.selectedRegionId)
   const humanDraftSelection = match?.humanDraftSelection ?? {}
   const dailySummary = standingsSummary(standings)
+  const pinnedPlayerId = viewedHuman?.id ?? human?.id ?? null
+  const visibleInspectedPlayerId =
+    match && inspectedPlayerId && inspectedPlayerId !== pinnedPlayerId && match.players.some((player) => player.id === inspectedPlayerId)
+      ? inspectedPlayerId
+      : null
   const playerGridColumns = match
-    ? match.players.length <= 2
+    ? match.players.length <= 3
       ? '1fr'
-      : match.players.length <= 4
-        ? 'repeat(2, minmax(0, 1fr))'
-        : 'repeat(3, minmax(0, 1fr))'
+      : 'repeat(2, minmax(0, 1fr))'
     : '1fr'
 
   function patchProfile(patch: Partial<PersistedProfile>) {
@@ -928,17 +932,28 @@ function App() {
           {match.phase === 'draft' ? renderDraft(match, activeHuman ?? human) : null}
           {match.phase === 'finished' ? renderFinished(match) : null}
 
-          <section className="rivals-stack" data-count={match.players.length} style={{ gridTemplateColumns: playerGridColumns }}>
-            {match.players.map((player) => (
-              <PlayerRow
-                active={currentPlayer?.id === player.id && match.phase === 'draft'}
-                echoDigits={getPlayerDigitEchoes(player, match.config.mode)}
-                human={player.kind === 'human'}
-                key={player.id}
-                player={player}
-              />
-            ))}
-          </section>
+            <section className="rivals-stack" data-count={match.players.length} style={{ gridTemplateColumns: playerGridColumns }}>
+              {match.players.map((player) => (
+                <PlayerRow
+                  active={currentPlayer?.id === player.id && match.phase === 'draft'}
+                  collapsible={player.id !== pinnedPlayerId}
+                  echoDigits={getPlayerDigitEchoes(player, match.config.mode)}
+                  expanded={player.id === pinnedPlayerId || player.id === visibleInspectedPlayerId}
+                  highlighted={player.id === visibleInspectedPlayerId}
+                  human={player.kind === 'human'}
+                  key={player.id}
+                  onToggle={
+                    player.id !== pinnedPlayerId
+                      ? () => {
+                          playSound('tap')
+                          setInspectedPlayerId((current) => (current === player.id ? null : player.id))
+                        }
+                      : undefined
+                  }
+                  player={player}
+                />
+              ))}
+            </section>
         </div>
 
         <aside className="side-panel">
