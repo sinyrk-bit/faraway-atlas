@@ -373,9 +373,9 @@ export function CardFace({
             ))}
           </div>
           <div className="card-art-overlay card-art-overlay-intel">
-            <div className="card-art-score-rune">
-              <strong>+{questPoints}</strong>
-              <div className="card-art-score-icons">
+            <div className="card-art-data-rail">
+              <div className="card-art-data-group is-score">
+                <strong>+{questPoints}</strong>
                 {visibleQuestItems.length > 0 ? (
                   visibleQuestItems.map((item) => (
                     <SymbolChip compact item={item} key={`${card.id}-art-quest-${item.key}`} />
@@ -384,10 +384,8 @@ export function CardFace({
                   <span className="card-art-mini-label">Fix</span>
                 )}
               </div>
-            </div>
-            <div className="card-art-icon-stack">
               {visiblePrerequisiteItems.length > 0 ? (
-                <div className="card-art-icon-row is-need">
+                <div className="card-art-data-group is-need">
                   <span>!</span>
                   {visiblePrerequisiteItems.map((item) => (
                     <SymbolChip compact item={item} key={`${card.id}-art-need-${item.key}`} />
@@ -395,7 +393,7 @@ export function CardFace({
                 </div>
               ) : null}
               {visibleCounterItems.length > 0 ? (
-                <div className="card-art-icon-row is-gain">
+                <div className="card-art-data-group is-gain">
                   <span>+</span>
                   {visibleCounterItems.map((item) => (
                     <SymbolChip compact item={item} key={`${card.id}-art-counter-${item.key}`} />

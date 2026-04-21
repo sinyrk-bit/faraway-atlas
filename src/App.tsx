@@ -37,6 +37,8 @@ import type {
   MatchState,
   PersistedProfile,
   PlayerState,
+  FinalStanding,
+  ScoreEntry,
 } from './game/types'
 
 type MatchSnapshot = {
@@ -51,6 +53,20 @@ type PhaseAnnouncement = {
   token: string
   title: string
   detail: string
+}
+
+type ScoreRevealState = {
+  playerIndex: number
+  revealedEntries: number
+  complete: boolean
+}
+
+function createScoreRevealState(): ScoreRevealState {
+  return {
+    playerIndex: 0,
+    revealedEntries: 0,
+    complete: false,
+  }
 }
 
 const phaseLabels: Record<MatchState['phase'], string> = {
@@ -260,33 +276,169 @@ function RulesDrawer({ open }: { open: boolean }) {
   )
 }
 
-function StandingPanel({
-  player,
-  rank,
-  focusedEntryIndex,
-}: {
-  player: ReturnType<typeof buildFinalStandings>[number]
-  rank: number
-  focusedEntryIndex: number
-}) {
+function formatScore(points: number) {
+  return points > 0 ? `+${points}` : `${points}`
+}
+
+function sumScoreEntries(entries: ScoreEntry[]) {
+  return entries.reduce((total, entry) => total + entry.points, 0)
+}
+
+function getRevealActionLabel(reveal: ScoreRevealState, standing: FinalStanding | undefined, totalPlayers: number) {
+  if (!standing) {
+    return 'Endscore anzeigen'
+  }
+
+  if (reveal.revealedEntries < standing.entries.length) {
+    return 'Karte aufdecken'
+  }
+
+  if (reveal.playerIndex < totalPlayers - 1) {
+    return 'Naechster Spieler'
+  }
+
+  return 'Endscore anzeigen'
+}
+
+function ScoreRevealEntry({ entry, index }: { entry: ScoreEntry; index: number }) {
   return (
-    <article className={`standing-panel ${rank === 0 ? 'is-winner' : ''}`}>
-      <header>
-        <span>{rank === 0 ? 'Sieger' : `#${rank + 1}`}</span>
-        <div>
-          <h3>{player.playerName}</h3>
-          <strong>{player.total} Ruhm</strong>
-        </div>
-      </header>
-      <div className="standing-breakdown">
-        {player.entries.slice(0, 8).map((entry, index) => (
-          <div className={`standing-entry ${focusedEntryIndex % Math.max(player.entries.length, 1) === index ? 'is-focused' : ''}`} key={entry.sourceId}>
-            <span>{entry.sourceName}</span>
-            <strong>{entry.points}</strong>
-          </div>
-        ))}
+    <article className={`score-reveal-entry ${entry.satisfied ? 'is-satisfied' : 'is-missed'}`}>
+      <span className="score-entry-index">{String(index + 1).padStart(2, '0')}</span>
+      <div className="score-entry-copy">
+        <strong>{entry.sourceName}</strong>
+        <p>{entry.reason}</p>
+      </div>
+      <div className="score-entry-points">
+        <span>{entry.sourceType === 'region' ? 'Region' : 'Refugium'}</span>
+        <strong>{formatScore(entry.points)}</strong>
       </div>
     </article>
+  )
+}
+
+function ScoreRevealCeremony({
+  standings,
+  reveal,
+}: {
+  standings: FinalStanding[]
+  reveal: ScoreRevealState
+}) {
+  const activeIndex = Math.min(reveal.playerIndex, Math.max(standings.length - 1, 0))
+  const activeStanding = standings[activeIndex]
+  const revealedEntries = activeStanding?.entries.slice(0, reveal.revealedEntries) ?? []
+  const upcomingEntry = activeStanding?.entries[reveal.revealedEntries]
+  const runningTotal = sumScoreEntries(revealedEntries)
+  const cardProgress = activeStanding?.entries.length
+    ? Math.round((reveal.revealedEntries / activeStanding.entries.length) * 100)
+    : 100
+
+  if (!activeStanding) {
+    return null
+  }
+
+  return (
+    <div className="score-ceremony">
+      <div className="score-progress-rail" aria-label="Wertungsfortschritt">
+        {standings.map((standing, index) => (
+          <span
+            className={[
+              'score-progress-node',
+              index < activeIndex ? 'is-complete' : '',
+              index === activeIndex ? 'is-active' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+            key={standing.playerId}
+          >
+            <strong>{index + 1}</strong>
+            <em>{standing.playerName}</em>
+          </span>
+        ))}
+      </div>
+
+      <div className="score-stage">
+        <section className="score-player-focus">
+          <span className="score-kicker">Wertung {activeIndex + 1} / {standings.length}</span>
+          <h3>{activeStanding.playerName}</h3>
+          <div className="score-live-meter">
+            <span>Live-Ruhm</span>
+            <strong>{runningTotal}</strong>
+            <em>von {activeStanding.total}</em>
+          </div>
+          <div className="score-card-meter">
+            <span style={{ width: `${cardProgress}%` }} />
+          </div>
+          <p>
+            {upcomingEntry
+              ? `Naechste Karte: ${upcomingEntry.sourceName}`
+              : `${activeStanding.playerName} ist komplett gewertet.`}
+          </p>
+        </section>
+
+        <section className="score-reveal-stack">
+          <div className="score-stack-head">
+            <span>{revealedEntries.length} / {activeStanding.entries.length} Karten offen</span>
+            <strong>{upcomingEntry ? 'Naechste Enthuellung bereit' : 'Spielerwertung abgeschlossen'}</strong>
+          </div>
+          <div className="score-reveal-list">
+            {revealedEntries.length === 0 ? (
+              <div className="score-empty-state">Noch keine Karte geoeffnet. Der erste Klick startet die Zaehlersequenz.</div>
+            ) : null}
+            {revealedEntries.map((entry, index) => (
+              <ScoreRevealEntry entry={entry} index={index} key={`${activeStanding.playerId}-${entry.sourceId}`} />
+            ))}
+          </div>
+        </section>
+
+        <aside className="score-completed">
+          <span>Bereits gewertet</span>
+          {standings.slice(0, activeIndex).length === 0 ? <p>Noch niemand abgeschlossen.</p> : null}
+          {standings.slice(0, activeIndex).map((standing, index) => (
+            <div className="score-completed-row" key={standing.playerId}>
+              <span>#{index + 1}</span>
+              <strong>{standing.playerName}</strong>
+              <em>{standing.total} Ruhm</em>
+            </div>
+          ))}
+        </aside>
+      </div>
+    </div>
+  )
+}
+
+function FinalScoreboard({ standings }: { standings: FinalStanding[] }) {
+  return (
+    <div className="final-scoreboard">
+      <section className="final-podium">
+        {standings.slice(0, 3).map((standing, index) => (
+          <article className={`podium-card podium-rank-${index + 1}`} key={standing.playerId}>
+            <span>{index === 0 ? 'Sieger' : `Platz ${index + 1}`}</span>
+            <strong>{standing.playerName}</strong>
+            <em>{standing.total} Ruhm</em>
+          </article>
+        ))}
+      </section>
+
+      <section className="final-score-list">
+        {standings.map((standing, index) => (
+          <article className={`final-score-row ${index === 0 ? 'is-winner' : ''}`} key={standing.playerId}>
+            <span className="final-rank">#{index + 1}</span>
+            <div className="final-player">
+              <strong>{standing.playerName}</strong>
+              <span>{standing.entries.length} Wertungen · Tempo {standing.tieBreaker}h</span>
+            </div>
+            <div className="final-entry-preview">
+              {standing.entries.slice(0, 4).map((entry) => (
+                <span key={`${standing.playerId}-mini-${entry.sourceId}`}>
+                  {entry.sourceName} {formatScore(entry.points)}
+                </span>
+              ))}
+            </div>
+            <strong className="final-total">{standing.total}</strong>
+          </article>
+        ))}
+      </section>
+    </div>
   )
 }
 
@@ -352,7 +504,7 @@ function App() {
   })
   const [match, setMatch] = useState<MatchState | null>(null)
   const [rulesOpen, setRulesOpen] = useState(false)
-  const [focusedStandingEntry, setFocusedStandingEntry] = useState(0)
+  const [scoreReveal, setScoreReveal] = useState<ScoreRevealState>(() => createScoreRevealState())
   const [inspectedPlayerId, setInspectedPlayerId] = useState<string | null>(null)
   const [inviteStatus, setInviteStatus] = useState('')
   const [invitePromptOpen, setInvitePromptOpen] = useState(() => hasInviteContext())
@@ -424,18 +576,6 @@ function App() {
     }, 700)
 
     return () => window.clearTimeout(timer)
-  }, [match, playSound])
-
-  useEffect(() => {
-    if (!match || match.phase !== 'finished') {
-      return
-    }
-
-    const timer = window.setInterval(() => {
-      setFocusedStandingEntry((value) => value + 1)
-    }, 1400)
-
-    return () => window.clearInterval(timer)
   }, [match, playSound])
 
   useEffect(() => {
@@ -568,7 +708,7 @@ function App() {
     playSound('lock')
     startTransition(() => {
       setMatch(createMatch(config))
-      setFocusedStandingEntry(0)
+      setScoreReveal(createScoreRevealState())
     })
   }
 
@@ -592,6 +732,50 @@ function App() {
     patchProfile({
       lastBestScore: Math.max(profile.lastBestScore, bestScore),
       lastWinner: winner,
+    })
+  }
+
+  function advanceScoreReveal() {
+    playSound('select')
+    setScoreReveal((current) => {
+      if (current.complete) {
+        return current
+      }
+
+      const activeStanding = standings[Math.min(current.playerIndex, Math.max(standings.length - 1, 0))]
+
+      if (!activeStanding) {
+        return { ...current, complete: true }
+      }
+
+      if (current.revealedEntries < activeStanding.entries.length) {
+        return {
+          ...current,
+          revealedEntries: current.revealedEntries + 1,
+        }
+      }
+
+      if (current.playerIndex < standings.length - 1) {
+        return {
+          playerIndex: current.playerIndex + 1,
+          revealedEntries: 0,
+          complete: false,
+        }
+      }
+
+      return {
+        ...current,
+        complete: true,
+      }
+    })
+  }
+
+  function skipScoreReveal() {
+    playSound('lock')
+    setScoreReveal({
+      playerIndex: standings.length,
+      revealedEntries: 0,
+      complete: true,
     })
   }
 
@@ -1152,41 +1336,60 @@ function App() {
   }
 
   function renderFinished(activeMatch: MatchState) {
+    const activeStanding = standings[Math.min(scoreReveal.playerIndex, Math.max(standings.length - 1, 0))]
+    const revealActionLabel = getRevealActionLabel(scoreReveal, activeStanding, standings.length)
+    const finalScreenVisible = scoreReveal.complete || standings.length === 0
+    const winnerName = standings[0]?.playerName ?? 'Der Tisch'
+
     return (
       <section className="phase-panel phase-finished" key={`finished-${activeMatch.round}`}>
         <div className="phase-copy">
-          <span className="phase-tag">Endwert</span>
-          <h2>{standings[0]?.playerName} fuehrt den Atlas an.</h2>
-          <p>{dailySummary.join('  |  ')}</p>
+          <span className="phase-tag">{finalScreenVisible ? 'Endscore' : 'Live-Wertung'}</span>
+          <h2>{finalScreenVisible ? `${winnerName} fuehrt den Atlas an.` : 'Oeffne die Wertung Karte fuer Karte.'}</h2>
+          <p>
+            {finalScreenVisible
+              ? dailySummary.join('  |  ')
+              : 'Der Host klickt weiter, alle koennen die gleiche Spannungswertung am Tisch verfolgen.'}
+          </p>
         </div>
-        <div className="standings-grid">
-          {standings.map((standing, index) => (
-            <StandingPanel focusedEntryIndex={focusedStandingEntry} key={standing.playerId} player={standing} rank={index} />
-          ))}
-        </div>
+        {finalScreenVisible ? <FinalScoreboard standings={standings} /> : <ScoreRevealCeremony reveal={scoreReveal} standings={standings} />}
         <div className="phase-actions">
-          <button
-            className="primary-button"
-            onClick={() => {
-              playSound('lock')
-              syncFinishedStats(activeMatch)
-              startMatch(activeMatch.config.mode)
-            }}
-            type="button"
-          >
-            Revanche im selben Modus
-          </button>
-          <button
-            className="ghost-button"
-            onClick={() => {
-              playSound('tap')
-              syncFinishedStats(activeMatch)
-              setMatch(null)
-            }}
-            type="button"
-          >
-            Zurueck zum Menue
-          </button>
+          {!finalScreenVisible ? (
+            <>
+              <button className="primary-button" onClick={advanceScoreReveal} type="button">
+                {revealActionLabel}
+              </button>
+              <button className="ghost-button" onClick={skipScoreReveal} type="button">
+                Skip zum Endscore
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                className="primary-button"
+                onClick={() => {
+                  playSound('lock')
+                  syncFinishedStats(activeMatch)
+                  startMatch(activeMatch.config.mode)
+                }}
+                type="button"
+              >
+                Revanche im selben Modus
+              </button>
+              <button
+                className="ghost-button"
+                onClick={() => {
+                  playSound('tap')
+                  syncFinishedStats(activeMatch)
+                  setMatch(null)
+                  setScoreReveal(createScoreRevealState())
+                }}
+                type="button"
+              >
+                Zurueck zum Menue
+              </button>
+            </>
+          )}
         </div>
       </section>
     )
