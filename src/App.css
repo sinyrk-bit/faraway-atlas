@@ -3010,11 +3010,15 @@
   .screen-menu {
     padding: 0.48rem;
     font-size: clamp(8.8px, 0.54vw, 11.5px);
+    min-height: 100dvh;
+    overflow: hidden;
   }
 
   .hero-shell {
     gap: 0.58rem;
     min-height: calc(100dvh - 0.96rem);
+    height: calc(100dvh - 0.96rem);
+    overflow: hidden;
   }
 
   .hero-copy {
@@ -3262,6 +3266,225 @@
   }
 
   .variant-restart-button em {
+    display: none;
+  }
+}
+
+@media (max-height: 560px) and (min-width: 901px) {
+  .screen-menu {
+    padding: 0.32rem;
+    place-items: stretch;
+    font-size: clamp(7.8px, 0.5vw, 10px);
+  }
+
+  .hero-shell {
+    width: 100%;
+    height: calc(100dvh - 0.64rem);
+    min-height: 0;
+    gap: 0.38rem;
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  }
+
+  .hero-copy,
+  .hero-panel {
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  .hero-copy {
+    padding: 0.58rem 0.7rem;
+    justify-content: center;
+  }
+
+  .hero-copy h1 {
+    max-width: none;
+    white-space: nowrap;
+    font-size: clamp(1.58rem, 3.1vw, 2.75rem);
+    line-height: 0.82;
+    margin: 0.08rem 0 0.32rem;
+    letter-spacing: 0.055em;
+  }
+
+  .hero-text {
+    max-width: 44rem;
+    font-size: 0.62rem;
+    line-height: 1.28;
+  }
+
+  .hero-signal-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 0.48rem;
+    gap: 0.34rem;
+  }
+
+  .hero-signal-card,
+  .command-card {
+    padding: 0.38rem 0.44rem;
+    border-radius: 13px;
+  }
+
+  .hero-signal-card strong {
+    font-size: 0.68rem;
+  }
+
+  .hero-actions {
+    margin-top: 0.42rem;
+    gap: 0.34rem;
+  }
+
+  .primary-button,
+  .ghost-button {
+    padding: 0.42rem 0.56rem;
+    border-radius: 13px;
+    font-size: 0.58rem;
+  }
+
+  .hero-panel {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    padding: 0.42rem;
+    gap: 0.28rem;
+  }
+
+  .panel-section {
+    gap: 0.26rem;
+  }
+
+  .mode-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.28rem;
+  }
+
+  .mode-tile {
+    padding: 0.36rem 0.42rem;
+    border-radius: 13px;
+    gap: 0.12rem;
+  }
+
+  .mode-tile span {
+    font-size: 0.66rem;
+  }
+
+  .mode-tile strong {
+    font-size: 0.56rem;
+    line-height: 1.08;
+  }
+
+  .mode-tile p {
+    display: none;
+  }
+
+  .settings-grid {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 0.28rem 0.34rem;
+    align-content: start;
+    overflow: hidden;
+  }
+
+  .field {
+    gap: 0.22rem;
+    min-width: 0;
+  }
+
+  .field-avatar {
+    grid-column: 1 / -1;
+  }
+
+  .field input {
+    padding: 0.42rem 0.54rem;
+    border-radius: 12px;
+    font-size: 0.68rem;
+  }
+
+  .avatar-picker-grid {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 0.18rem;
+  }
+
+  .avatar-choice {
+    padding: 0.12rem;
+    border-radius: 10px;
+    gap: 0;
+  }
+
+  .avatar-choice-image {
+    height: 2.05rem;
+    aspect-ratio: auto;
+    border-radius: 8px;
+  }
+
+  .avatar-choice span {
+    display: none;
+  }
+
+  .field-hint {
+    display: none;
+  }
+
+  .segment-row {
+    gap: 0.24rem;
+  }
+
+  .segment-button {
+    padding: 0.34rem 0.48rem;
+    border-radius: 11px;
+    font-size: 0.62rem;
+  }
+
+  .stats-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.28rem;
+  }
+
+  .stats-row article {
+    padding: 0.26rem 0.38rem;
+    border-radius: 12px;
+  }
+
+  .stats-row strong {
+    font-size: 0.62rem;
+  }
+
+  .inline-toggle {
+    padding: 0.22rem 0.46rem;
+    font-size: 0.58rem;
+  }
+}
+
+@media (max-height: 430px) and (min-width: 901px) {
+  .hero-copy {
+    padding: 0.42rem 0.56rem;
+  }
+
+  .hero-copy h1 {
+    font-size: clamp(1.42rem, 2.7vw, 2.35rem);
+    margin-bottom: 0.24rem;
+  }
+
+  .hero-text {
+    font-size: 0.56rem;
+    line-height: 1.18;
+  }
+
+  .hero-signal-row {
+    margin-top: 0.32rem;
+  }
+
+  .hero-actions {
+    margin-top: 0.3rem;
+  }
+
+  .hero-panel {
+    padding: 0.32rem;
+  }
+
+  .avatar-choice-image {
+    height: 1.7rem;
+  }
+
+  .stats-row {
     display: none;
   }
 }
