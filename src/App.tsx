@@ -89,6 +89,8 @@ const modeCinematicLine: Record<MatchMode, string> = {
   starfall: 'Meteore bleiben sichtbar und jede Endziffer kann das Endspiel kippen.',
 }
 
+const restartModeOrder: MatchMode[] = ['classic', 'advanced', 'starfall']
+
 function readInviteProfilePatch() {
   if (typeof window === 'undefined') {
     return {}
@@ -779,6 +781,12 @@ function App() {
     })
   }
 
+  function restartFromScore(activeMatch: MatchState, mode: MatchMode) {
+    syncFinishedStats(activeMatch)
+    patchProfile({ preferredMode: mode })
+    startMatch(mode)
+  }
+
   function updateHumanDraft(partial: DraftSelection) {
     if (!match) {
       return
@@ -1353,7 +1361,7 @@ function App() {
           </p>
         </div>
         {finalScreenVisible ? <FinalScoreboard standings={standings} /> : <ScoreRevealCeremony reveal={scoreReveal} standings={standings} />}
-        <div className="phase-actions">
+        <div className={`phase-actions ${finalScreenVisible ? 'final-actions' : ''}`}>
           {!finalScreenVisible ? (
             <>
               <button className="primary-button" onClick={advanceScoreReveal} type="button">
@@ -1365,19 +1373,29 @@ function App() {
             </>
           ) : (
             <>
+              <section className="final-rematch-panel">
+                <div className="final-rematch-copy">
+                  <span>Neustart</span>
+                  <strong>Waehle direkt deine naechste Variante.</strong>
+                </div>
+                <div className="final-variant-grid">
+                  {restartModeOrder.map((mode) => (
+                    <button
+                      className={`variant-restart-button ${mode === activeMatch.config.mode ? 'is-current' : ''}`}
+                      key={mode}
+                      onClick={() => restartFromScore(activeMatch, mode)}
+                      style={{ '--mode-accent': modeMeta[mode].accent } as CSSProperties}
+                      type="button"
+                    >
+                      <span>{mode === activeMatch.config.mode ? 'Revanche' : 'Variante'}</span>
+                      <strong>{modeMeta[mode].title}</strong>
+                      <em>{modeMeta[mode].summary}</em>
+                    </button>
+                  ))}
+                </div>
+              </section>
               <button
-                className="primary-button"
-                onClick={() => {
-                  playSound('lock')
-                  syncFinishedStats(activeMatch)
-                  startMatch(activeMatch.config.mode)
-                }}
-                type="button"
-              >
-                Revanche im selben Modus
-              </button>
-              <button
-                className="ghost-button"
+                className="ghost-button final-menu-button"
                 onClick={() => {
                   playSound('tap')
                   syncFinishedStats(activeMatch)
