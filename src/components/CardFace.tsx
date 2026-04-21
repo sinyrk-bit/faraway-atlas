@@ -281,23 +281,6 @@ function SymbolChip({ item, compact = false }: { item: SymbolItem; compact?: boo
   )
 }
 
-function ResourceBadges({ card }: { card: RegionCard | SanctuaryCard }) {
-  const counters = buildCounterItems(card)
-
-  return (
-    <div className="card-counterbar">
-      {counters.length > 0 ? (
-        counters.map((item) => <SymbolChip compact key={`${card.id}-${item.key}`} item={item} />)
-      ) : (
-        <span className="symbol-chip is-empty is-compact">
-          <span className="symbol-chip-sigil">--</span>
-          <span className="symbol-chip-value">0</span>
-        </span>
-      )}
-    </div>
-  )
-}
-
 export function CardFace({
   card,
   compact = false,
@@ -390,10 +373,9 @@ export function CardFace({
             ))}
           </div>
           <div className="card-art-overlay card-art-overlay-intel">
-            <div className="card-art-formula card-art-formula-score">
-              <span>Wertung</span>
+            <div className="card-art-score-rune">
               <strong>+{questPoints}</strong>
-              <div className="card-art-formula-icons">
+              <div className="card-art-score-icons">
                 {visibleQuestItems.length > 0 ? (
                   visibleQuestItems.map((item) => (
                     <SymbolChip compact item={item} key={`${card.id}-art-quest-${item.key}`} />
@@ -403,26 +385,24 @@ export function CardFace({
                 )}
               </div>
             </div>
-            {visiblePrerequisiteItems.length > 0 ? (
-              <div className="card-art-formula card-art-formula-need">
-                <span>Braucht</span>
-                <div className="card-art-formula-icons">
+            <div className="card-art-icon-stack">
+              {visiblePrerequisiteItems.length > 0 ? (
+                <div className="card-art-icon-row is-need">
+                  <span>!</span>
                   {visiblePrerequisiteItems.map((item) => (
                     <SymbolChip compact item={item} key={`${card.id}-art-need-${item.key}`} />
                   ))}
                 </div>
-              </div>
-            ) : null}
-            {visibleCounterItems.length > 0 ? (
-              <div className="card-art-formula card-art-formula-gain">
-                <span>Gibt</span>
-                <div className="card-art-formula-icons">
+              ) : null}
+              {visibleCounterItems.length > 0 ? (
+                <div className="card-art-icon-row is-gain">
+                  <span>+</span>
                   {visibleCounterItems.map((item) => (
                     <SymbolChip compact item={item} key={`${card.id}-art-counter-${item.key}`} />
                   ))}
                 </div>
-              </div>
-            ) : null}
+              ) : null}
+            </div>
           </div>
           <div className="card-art-description">
             <strong>{card.subtitle}</strong>
@@ -449,17 +429,37 @@ export function CardFace({
         )}
       </header>
 
-      <div className="card-score-row">
-        <span className="card-score-badge">+{questPoints}</span>
-        <div className="card-score-track">
-          {questItems.map((item) => (
-            <SymbolChip compact item={item} key={`${card.id}-quest-${item.key}`} />
-          ))}
-          {prerequisiteItems.length > 0 ? <span className="card-score-caption">Braucht</span> : null}
-          {prerequisiteItems.map((item) => (
-            <SymbolChip compact item={item} key={`${card.id}-need-${item.key}`} />
-          ))}
+      <div className="card-symbol-board">
+        <div className="card-symbol-main">
+          <span className="card-score-badge">+{questPoints}</span>
+          <div className="card-score-track">
+            {questItems.length > 0 ? (
+              questItems.map((item) => <SymbolChip compact item={item} key={`${card.id}-quest-${item.key}`} />)
+            ) : (
+              <span className="card-symbol-empty">Fixwert</span>
+            )}
+          </div>
         </div>
+        {prerequisiteItems.length > 0 ? (
+          <div className="card-symbol-row is-need">
+            <span>Braucht</span>
+            <div className="card-score-track">
+              {prerequisiteItems.map((item) => (
+                <SymbolChip compact item={item} key={`${card.id}-need-${item.key}`} />
+              ))}
+            </div>
+          </div>
+        ) : null}
+        {counters.length > 0 ? (
+          <div className="card-symbol-row is-gain">
+            <span>Gibt</span>
+            <div className="card-score-track">
+              {counters.map((item) => (
+                <SymbolChip compact item={item} key={`${card.id}-counter-${item.key}`} />
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {card.cardType === 'region' ? (
@@ -483,13 +483,13 @@ export function CardFace({
         </div>
       )}
 
-      <ResourceBadges card={card} />
-
-      <section className="card-quest">
-        <strong>Auftrag</strong>
-        <p>{'quest' in card && card.quest ? card.quest.label : 'Liefert nur Stuetzsymbole.'}</p>
-        {'quest' in card && card.quest?.prerequisite ? <span>{card.quest.prerequisite.label}</span> : null}
-      </section>
+      {!compact ? (
+        <section className="card-quest">
+          <strong>Auftrag</strong>
+          <p>{'quest' in card && card.quest ? card.quest.label : 'Liefert nur Stuetzsymbole.'}</p>
+          {'quest' in card && card.quest?.prerequisite ? <span>{card.quest.prerequisite.label}</span> : null}
+        </section>
+      ) : null}
 
       {!compact ? <footer className="card-flavor">{card.flavor}</footer> : null}
     </button>
