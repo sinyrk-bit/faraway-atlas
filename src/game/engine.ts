@@ -338,7 +338,7 @@ export function scorePlayer(player: PlayerState, starfall: boolean) {
   })
 
   const total = entries.reduce((sum, entry) => sum + entry.points, 0)
-  const tieBreaker = Math.min(...player.tableau.map((card) => card.duration))
+  const tieBreaker = Math.min(...player.tableau.map((card) => card.serial))
 
   return {
     total,
@@ -369,15 +369,14 @@ function evaluateRegionValue(
   const currentContext = buildScoreContext(currentTableau, player.sanctuaries)
   const base = scoreQuest(card.quest, currentContext, card.serial).points
   const previous = player.tableau.at(-1)
-  const sanctuaryBoost =
-    previous && card.duration + (mode === 'starfall' && card.meteor ? 1 : 0) > previous.duration ? 6 : 0
+  const sanctuaryBoost = previous && card.serial > previous.serial ? 6.4 : 0
   const clueBoost = card.clues * 1.4
   const resourceBoost = card.resources.uddu * 1.2 + card.resources.okiko * 1.8 + card.resources.goldlog * 2.2
-  const tempoBoost = round < maxRounds ? Math.max(0, 9 - card.duration) * 0.55 : 0
+  const initiativeBoost = round < maxRounds ? Math.max(0, 69 - card.serial) * 0.075 : 0
   const meteorBoost = mode === 'starfall' && card.meteor ? 4.5 : 0
   const nightBoost = card.time === 'night' ? 0.8 : 0
 
-  return base + sanctuaryBoost + clueBoost + resourceBoost + tempoBoost + meteorBoost + nightBoost
+  return base + sanctuaryBoost + clueBoost + resourceBoost + initiativeBoost + meteorBoost + nightBoost
 }
 
 function evaluateSanctuaryValue(player: PlayerState, card: SanctuaryCard, mode: MatchConfig['mode']) {
@@ -479,17 +478,17 @@ function aiChooseSanctuary(player: PlayerState, state: MatchState) {
   return player.pendingSanctuaries[choiceIndex]?.id
 }
 
-function effectiveDraftMetric(card: RegionCard, starfall: boolean) {
-  return card.duration + (starfall && card.meteor ? -0.25 : 0)
+function effectiveDraftMetric(card: RegionCard) {
+  return card.serial
 }
 
-function shouldFindSanctuary(player: PlayerState, playedCard: RegionCard, mode: MatchConfig['mode']) {
+function shouldFindSanctuary(player: PlayerState, playedCard: RegionCard) {
   const previous = player.tableau.at(-2)
   if (!previous) {
     return false
   }
 
-  return playedCard.duration + (mode === 'starfall' && playedCard.meteor ? 1 : 0) > previous.duration
+  return playedCard.serial > previous.serial
 }
 
 function draftSanctuaries(
@@ -887,7 +886,7 @@ export function confirmReveal(state: MatchState) {
   reveals.forEach(({ playerId, card }) => {
     const playerIndex = getPlayerIndex(next.players, playerId)
     const player = next.players[playerIndex]
-    const foundSanctuary = shouldFindSanctuary(player, card, next.config.mode)
+    const foundSanctuary = shouldFindSanctuary(player, card)
     let sanctuaryCount = 0
 
     if (foundSanctuary) {
@@ -910,11 +909,9 @@ export function confirmReveal(state: MatchState) {
 
   next.draftOrder = [...next.revealEntries]
     .sort((left, right) => {
-      const durationDelta =
-        effectiveDraftMetric(left.card, next.config.mode === 'starfall') -
-        effectiveDraftMetric(right.card, next.config.mode === 'starfall')
-      if (durationDelta !== 0) {
-        return durationDelta
+      const serialDelta = effectiveDraftMetric(left.card) - effectiveDraftMetric(right.card)
+      if (serialDelta !== 0) {
+        return serialDelta
       }
       return left.card.serial - right.card.serial
     })

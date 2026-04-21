@@ -102,7 +102,6 @@ export interface RegionCard {
   subtitle: string
   flavor: string
   biome: Biome
-  duration: number
   time: TimeOfDay
   clues: number
   resources: ResourceMap

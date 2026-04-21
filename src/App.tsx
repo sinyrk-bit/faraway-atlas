@@ -78,11 +78,6 @@ const phaseLabels: Record<MatchState['phase'], string> = {
   finished: 'Endstand',
 }
 
-const timeLabels = {
-  day: 'Tag',
-  night: 'Nacht',
-} as const
-
 const modeCinematicLine: Record<MatchMode, string> = {
   classic: 'Acht Runden. Eine makellose Route. Kein zweiter Versuch.',
   advanced: 'Mehr Auftakt, mehr Druck, mehr Raum fuer praezise Perfektion.',
@@ -236,8 +231,8 @@ function RevealSummary({ match }: { match: MatchState }) {
               <strong>{entry.card.title}</strong>
             </div>
             <div className="reveal-meta">
-              <span>{entry.card.duration}h</span>
-              <span>{timeLabels[entry.card.time]}</span>
+              <span>#{entry.card.serial}</span>
+              <span>{entry.card.time === 'night' ? 'Mond' : 'Sonne'}</span>
             </div>
             <p>
               {entry.foundSanctuary
@@ -260,11 +255,11 @@ function RulesDrawer({ open }: { open: boolean }) {
     <aside className="rules-drawer">
       <div className="rules-block">
         <span>Kernablauf</span>
-        <p>Spiele pro Runde eine Region, decke gleichzeitig auf und drafte danach in aufsteigender Dauer aus dem Markt.</p>
+        <p>Spiele pro Runde eine Region, decke gleichzeitig auf und drafte danach in aufsteigender Kartennummer aus dem Markt.</p>
       </div>
       <div className="rules-block">
         <span>Refugien</span>
-        <p>Refugien findest du nur dann, wenn die soeben gespielte Region eine höhere Dauer als die vorherige besitzt.</p>
+        <p>Refugien findest du nur dann, wenn deine neue Karte eine hoehere Nummer als deine zuvor gespielte Region hat.</p>
       </div>
       <div className="rules-block">
         <span>Wertung</span>
@@ -427,7 +422,7 @@ function FinalScoreboard({ standings }: { standings: FinalStanding[] }) {
             <span className="final-rank">#{index + 1}</span>
             <div className="final-player">
               <strong>{standing.playerName}</strong>
-              <span>{standing.entries.length} Wertungen · Tempo {standing.tieBreaker}h</span>
+              <span>{standing.entries.length} Wertungen · Leitnummer #{standing.tieBreaker}</span>
             </div>
             <div className="final-entry-preview">
               {standing.entries.slice(0, 4).map((entry) => (
@@ -462,7 +457,7 @@ function buildPhaseAnnouncement(match: MatchState, activeName?: string): PhaseAn
       return {
         token: `reveal-${match.round}-${match.revealEntries.length}`,
         title: 'Synchrones Aufdecken',
-        detail: 'Die Tischreihenfolge enthuellt sich jetzt in Tempoabstufungen.',
+        detail: 'Die Tischreihenfolge enthuellt sich jetzt ueber die Kartennummern.',
       }
     case 'draft':
       return {
@@ -492,7 +487,7 @@ function buildPlayerStatusLine(player: PlayerState) {
     return 'Noch keine gespielte Region.'
   }
 
-  return `Letzte Karte #${latestRoute.serial} · ${latestRoute.duration}h · ${latestRoute.title}`
+  return `Letzte Karte #${latestRoute.serial} · ${latestRoute.title}`
 }
 
 function App() {
@@ -649,9 +644,9 @@ function App() {
     : match.phase === 'opening-hand'
       ? 'Waehle eine perfekt skalierte Auftakthand und halte die Flex-Kurve offen.'
       : match.phase === 'choose-region'
-        ? 'Optimiere Tempo gegen Refugiumszugriff und spiele nicht blind auf kurze Dauer.'
+        ? 'Spiele Nummern bewusst ansteigend, wenn du Refugien freischalten willst.'
         : match.phase === 'reveal'
-          ? 'Lies die Reihenfolge, bevor der Markt aufspringt, und plane den Premium-Pick.'
+          ? 'Lies die Nummernreihenfolge, bevor der Markt aufspringt, und plane den Premium-Pick.'
           : match.phase === 'draft'
             ? 'Sichere die beste Region fuer dein Endspielfenster und verliere keine Refugiumswerte.'
             : match.phase === 'finished'
@@ -1165,7 +1160,7 @@ function App() {
         <div className="phase-copy">
           <span className="phase-tag">Region waehlen</span>
           <h2>{activeHumanPlayer.name}, plane deinen naechsten Schritt.</h2>
-          <p>Niedrige Dauer bedeutet fruehere Draft-Prioritaet. Hoehere Dauer kann Refugien freischalten, wenn du deine letzte Karte uebertriffst.</p>
+          <p>Niedrige Kartennummer bedeutet fruehere Draft-Prioritaet. Eine hoehere Nummer als deine letzte Karte oeffnet Refugien.</p>
         </div>
         <div className="seat-banner">Aktiver Platz: {activeHumanPlayer.name}</div>
         <div className="card-grid">
@@ -1212,8 +1207,8 @@ function App() {
       <section className="phase-panel phase-panel-reveal" key={`reveal-${activeMatch.round}`}>
         <div className="phase-copy">
           <span className="phase-tag">Aufdecken</span>
-          <h2>Der Tisch loest sich in Temporeihenfolge auf.</h2>
-          <p>Schnelle Routen draften zuerst. Refugiumspruefungen passieren vor dem Marktdraft und koennen die ganze Runde kippen.</p>
+          <h2>Der Tisch loest sich in Nummernreihenfolge auf.</h2>
+          <p>Kleine Nummern draften zuerst. Refugiumspruefungen passieren vor dem Marktdraft und koennen die ganze Runde kippen.</p>
         </div>
         <RevealSummary match={activeMatch} />
         <button
@@ -1243,7 +1238,7 @@ function App() {
           <span className="phase-tag">Marktphase</span>
           <h2>{isHumanTurn ? `${activeHumanPlayer.name}, du bist mit dem Draft dran.` : `${currentPlayer?.name} draftet gerade.`}</h2>
           <p>
-            Die Draft-Reihenfolge beginnt bei der niedrigsten Dauer. Nimm eine Region aus dem Markt und sichere danach ein Refugium aus deinen Funden.
+            Die Draft-Reihenfolge beginnt bei der niedrigsten Kartennummer. Nimm eine Region aus dem Markt und sichere danach ein Refugium aus deinen Funden.
           </p>
         </div>
 
@@ -1508,7 +1503,7 @@ function App() {
                   type="button"
                 >
                   <strong>{card.title}</strong>
-                  <span>{card.duration}h</span>
+                  <span>#{card.serial}</span>
                 </button>
               ))}
             </div>

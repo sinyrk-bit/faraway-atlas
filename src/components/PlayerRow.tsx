@@ -108,12 +108,11 @@ export function PlayerRow({
                   style={{ '--slot-accent': biomeMeta[card.biome].accent } as CSSProperties}
                 >
                   <div className="route-slot-top">
-                    <strong>{card.serial}</strong>
-                    <span>{card.duration}h</span>
+                    <strong>#{card.serial}</strong>
+                    <span>{biomeMeta[card.biome].short.slice(0, 2)}</span>
                   </div>
                   <div className="route-slot-bottom">
-                    <span>{biomeMeta[card.biome].short.slice(0, 2)}</span>
-                    <span>{card.time === 'night' ? 'N' : 'T'}</span>
+                    <span>{card.time === 'night' ? 'Mond' : 'Sonne'}</span>
                     {card.meteor ? <span>M</span> : null}
                   </div>
                 </article>
@@ -137,7 +136,7 @@ export function PlayerRow({
         </>
       ) : (
         <div className="player-collapsed-strip">
-          <span>{latestRoute ? `Letzte Karte #${latestRoute.serial} · ${latestRoute.duration}h` : 'Noch keine gespielte Region.'}</span>
+          <span>{latestRoute ? `Letzte Karte #${latestRoute.serial}` : 'Noch keine gespielte Region.'}</span>
           <strong>{player.sanctuaries.length > 0 ? `${player.sanctuaries.length} Refugien sichtbar` : 'Keine Refugien'}</strong>
         </div>
       )}

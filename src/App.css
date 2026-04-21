@@ -1023,6 +1023,9 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transform-origin: center;
+  transition: transform 220ms ease, filter 220ms ease;
+  will-change: transform, filter;
 }
 
 .card-art-description {
@@ -1636,8 +1639,8 @@
 .card-art-shell::after {
   background:
     linear-gradient(180deg, rgba(3, 6, 12, 0.04), transparent 42%, rgba(2, 5, 10, 0.24)),
-    radial-gradient(circle at 12% 10%, color-mix(in srgb, var(--card-accent) 18%, transparent), transparent 24%),
-    radial-gradient(circle at 84% 16%, color-mix(in srgb, var(--card-secondary, #9aa2ff) 18%, transparent), transparent 30%);
+    radial-gradient(circle at var(--card-rift-x, 12%) var(--card-rift-y, 10%), color-mix(in srgb, var(--card-accent) 18%, transparent), transparent 24%),
+    radial-gradient(circle at var(--card-bloom-x, 84%) var(--card-bloom-y, 16%), color-mix(in srgb, var(--card-secondary, #9aa2ff) 18%, transparent), transparent 30%);
 }
 
 .card-art-overlay-intel,
@@ -1650,6 +1653,9 @@
 }
 
 .card-art-stat {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-width: 2.05rem;
   padding: 0.2rem 0.38rem;
   background:
@@ -1658,6 +1664,14 @@
   border-color: rgba(255, 255, 255, 0.16);
   box-shadow: 0 7px 14px rgba(0, 0, 0, 0.28), 0 0 16px color-mix(in srgb, var(--card-accent) 16%, transparent);
   font-size: 0.54rem;
+}
+
+.card-art-stat-symbol {
+  width: 0.96rem;
+  height: 0.96rem;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.12));
 }
 
 .card-info-panel {

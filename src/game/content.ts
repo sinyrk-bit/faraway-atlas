@@ -299,7 +299,6 @@ function buildResources(serial: number, biome: Biome, meteor: boolean): Resource
 function buildRegionCard(serial: number, meteor = false): RegionCard {
   const biome = BIOMES[(serial + (meteor ? 1 : 0)) % BIOMES.length]
   const { title, subtitle } = buildRegionTitle(serial, biome)
-  const duration = 1 + ((serial * (meteor ? 7 : 5) + (meteor ? 3 : 1)) % 8)
   const time: TimeOfDay = serial % (meteor ? 2 : 3) === 0 ? 'night' : 'day'
   const clues = meteor ? (serial % 4 === 0 ? 2 : 1) : serial % 9 === 0 ? 2 : serial % 4 === 0 ? 1 : 0
 
@@ -313,7 +312,6 @@ function buildRegionCard(serial: number, meteor = false): RegionCard {
       ? 'Ein Meteor reißt den Himmel auf und lässt verborgene Routen elektrisch nachglühen.'
       : 'Die Bewohner erinnern sich an jeden Pfad anders, als er ursprünglich begangen wurde.',
     biome,
-    duration,
     time,
     clues,
     resources: buildResources(serial, biome, meteor),

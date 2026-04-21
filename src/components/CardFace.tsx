@@ -2,12 +2,13 @@ import type { CSSProperties } from 'react'
 import clueIcon from '../assets/icons/clue-icon.jpg'
 import goldlogIcon from '../assets/icons/goldlog-icon.jpg'
 import meteorIcon from '../assets/icons/meteor-icon.jpg'
-import nightIcon from '../assets/icons/night-icon.jpg'
+import moonSymbolIcon from '../assets/icons/moon-symbol.png'
 import okikoIcon from '../assets/icons/okiko-icon.jpg'
 import sanctuaryIcon from '../assets/icons/sanctuary-icon.jpg'
+import sunSymbolIcon from '../assets/icons/sun-symbol.png'
 import udduIcon from '../assets/icons/uddu-icon.jpg'
 import { biomeMeta, resourceMeta } from '../game/content'
-import { getCardArt } from '../game/visuals'
+import { getCardArtTreatment } from '../game/visuals'
 import type { Biome, PlayCard, Prerequisite, Quest, RegionCard, ResourceType, SanctuaryCard } from '../game/types'
 
 interface CardFaceProps {
@@ -28,11 +29,6 @@ const rarityLabels = {
   mythic: 'Mythisch',
 } as const
 
-const timeLabels = {
-  day: 'Tag',
-  night: 'Nacht',
-} as const
-
 type IconArtKey = 'uddu' | 'okiko' | 'goldlog' | 'clue' | 'night' | 'sanctuary' | 'meteor'
 
 const iconArt: Record<IconArtKey, string> = {
@@ -40,7 +36,7 @@ const iconArt: Record<IconArtKey, string> = {
   okiko: okikoIcon,
   goldlog: goldlogIcon,
   clue: clueIcon,
-  night: nightIcon,
+  night: moonSymbolIcon,
   sanctuary: sanctuaryIcon,
   meteor: meteorIcon,
 }
@@ -71,6 +67,14 @@ type SymbolItem = {
   accent: string
   value?: number | string
   iconKey?: IconArtKey
+}
+
+type ArtStat = {
+  key: string
+  label?: string
+  iconSrc?: string
+  title: string
+  imageClassName?: string
 }
 
 function buildBiomeItem(biome: Biome): SymbolItem {
@@ -302,7 +306,7 @@ export function CardFace({
       : card.rarity === 'rare'
         ? '#b58cff'
         : '#ffe29a'
-  const art = getCardArt(card)
+  const art = getCardArtTreatment(card)
   const counters = buildCounterItems(card)
   const quest = 'quest' in card ? card.quest : undefined
   const questItems = buildQuestItems(quest)
@@ -312,18 +316,26 @@ export function CardFace({
   const visibleCounterItems = counters.slice(0, 3)
   const visibleQuestItems = questItems.slice(0, 3)
   const visiblePrerequisiteItems = prerequisiteItems.slice(0, 3)
-  const artStats =
+  const artStats: ArtStat[] =
     card.cardType === 'region'
       ? [
-          { key: 'serial', label: `#${card.serial}` },
-          { key: 'biome', label: biomeSigils[card.biome] },
-          { key: 'duration', label: `${card.duration}H` },
-          { key: 'time', label: card.time === 'night' ? 'NT' : 'TG' },
+          { key: 'serial', label: `#${card.serial}`, title: `Karte ${card.serial}` },
+          { key: 'biome', label: biomeSigils[card.biome], title: biomeMeta[card.biome].label },
+          {
+            key: 'time',
+            iconSrc: card.time === 'night' ? moonSymbolIcon : sunSymbolIcon,
+            title: card.time === 'night' ? 'Nachtkarte' : 'Tageskarte',
+            imageClassName: 'card-art-stat-symbol',
+          },
         ]
       : [
-          { key: 'sanctuary', label: 'RF' },
-          { key: 'biome', label: card.linkedBiome ? biomeSigils[card.linkedBiome] : 'NE' },
-          { key: 'rarity', label: card.rarity === 'rare' ? 'SR' : 'GE' },
+          { key: 'sanctuary', label: 'RF', title: 'Refugium' },
+          {
+            key: 'biome',
+            label: card.linkedBiome ? biomeSigils[card.linkedBiome] : 'NE',
+            title: card.linkedBiome ? biomeMeta[card.linkedBiome].label : 'Neutral',
+          },
+          { key: 'rarity', label: card.rarity === 'rare' ? 'SR' : 'GE', title: card.rarity === 'rare' ? 'Selten' : 'Gewoehnlich' },
         ]
   const classes = [
     'card-face',
@@ -348,6 +360,10 @@ export function CardFace({
           '--card-accent': accent,
           '--card-secondary': secondaryAccent,
           '--card-orbit': `${'serial' in card ? (card.serial * 13) % 100 : (card.title.length * 17) % 100}%`,
+          '--card-rift-x': art.riftX,
+          '--card-rift-y': art.riftY,
+          '--card-bloom-x': art.bloomX,
+          '--card-bloom-y': art.bloomY,
         } as CSSProperties
       }
       type="button"
@@ -363,12 +379,21 @@ export function CardFace({
           <img
             alt={card.cardType === 'region' ? `${card.title} Biombild` : `${card.title} Refugiumsbild`}
             className="card-art-image"
-            src={art}
+            src={art.src}
+            style={{
+              objectPosition: art.position,
+              transform: art.transform,
+              filter: art.filter,
+            }}
           />
           <div className="card-art-overlay card-art-overlay-top">
             {artStats.map((item) => (
-              <span className="card-art-stat" key={`${card.id}-${item.key}`}>
-                {item.label}
+              <span className="card-art-stat" key={`${card.id}-${item.key}`} title={item.title}>
+                {item.iconSrc ? (
+                  <img alt="" className={item.imageClassName ?? 'card-art-stat-symbol'} src={item.iconSrc} />
+                ) : (
+                  item.label
+                )}
               </span>
             ))}
           </div>
@@ -416,16 +441,15 @@ export function CardFace({
             <h3>{card.title}</h3>
             <p>{card.subtitle}</p>
           </div>
-          {'duration' in card ? (
-            <div className="card-meta">
-              <span className="card-duration">{card.duration}h</span>
-              <span className={`card-time card-time-${card.time}`}>{timeLabels[card.time]}</span>
-            </div>
-          ) : (
-            <div className="card-meta">
-              <span className="card-duration">{card.linkedBiome ? biomeMeta[card.linkedBiome].short : 'Neutral'}</span>
-            </div>
-          )}
+          <div className="card-meta">
+            <span className="card-duration">
+              {card.cardType === 'region'
+                ? `#${card.serial}`
+                : card.linkedBiome
+                  ? biomeMeta[card.linkedBiome].short
+                  : 'Neutral'}
+            </span>
+          </div>
         </header>
 
         <div className="card-symbol-board">

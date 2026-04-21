@@ -25,6 +25,17 @@ import avatarCyber9 from '../assets/avatars/avatar-cyber-09.jpg'
 import avatarCyber10 from '../assets/avatars/avatar-cyber-10.jpg'
 import type { PlayCard } from './types'
 
+export interface CardArtTreatment {
+  src: string
+  position: string
+  transform: string
+  filter: string
+  riftX: string
+  riftY: string
+  bloomX: string
+  bloomY: string
+}
+
 export const availableAvatars = [
   { id: 'cyber-01', label: 'Cyan Visier', src: avatarCyber1 },
   { id: 'cyber-02', label: 'Nacht-Orakel', src: avatarCyber2 },
@@ -61,6 +72,14 @@ function pickVariant<T>(items: readonly T[], seed: number) {
   return items[seed % items.length]
 }
 
+function buildCardVisualSeed(card: PlayCard) {
+  if (card.cardType === 'sanctuary') {
+    return hashString(`${card.id}:${card.title}:${card.linkedBiome ?? 'neutral'}:${card.clues}:${card.bonusNight}`)
+  }
+
+  return hashString(`${card.id}:${card.serial}:${card.title}:${card.biome}:${card.time}:${card.meteor ? 'meteor' : 'base'}`)
+}
+
 export function getAvatarById(avatarId?: string) {
   if (!avatarId) {
     return availableAvatars[0].src
@@ -71,13 +90,38 @@ export function getAvatarById(avatarId?: string) {
 
 export function getCardArt(card: PlayCard) {
   if (card.cardType === 'sanctuary') {
-    const sanctuarySeed = hashString(`${card.id}:${card.title}:${card.linkedBiome ?? 'neutral'}`)
+    const sanctuarySeed = buildCardVisualSeed(card)
     return pickVariant(artPools.sanctuary, sanctuarySeed)
   }
 
   const biomePool = artPools[card.biome]
-  const regionSeed = card.serial + (card.meteor ? 1 : 0) + card.duration + (card.time === 'night' ? 2 : 0)
+  const regionSeed = buildCardVisualSeed(card)
   return pickVariant(biomePool, regionSeed)
+}
+
+export function getCardArtTreatment(card: PlayCard): CardArtTreatment {
+  const seed = buildCardVisualSeed(card)
+  const src = getCardArt(card)
+  const positionX = 10 + (seed % 76)
+  const positionY = 12 + ((seed >>> 6) % 58)
+  const scale = 1.08 + ((seed >>> 12) % 12) * 0.025
+  const rotate = ((seed >>> 17) % 13) - 6
+  const flip = ((seed >>> 21) & 1) === 0 ? 1 : -1
+  const saturate = 0.94 + ((seed >>> 4) % 9) * 0.07
+  const brightness = 0.9 + ((seed >>> 10) % 7) * 0.04
+  const contrast = 0.96 + ((seed >>> 15) % 5) * 0.06
+  const hueShift = ((seed >>> 22) % 17) - 8
+
+  return {
+    src,
+    position: `${positionX}% ${positionY}%`,
+    transform: `scale(${(flip * scale).toFixed(3)}, ${scale.toFixed(3)}) rotate(${rotate}deg)`,
+    filter: `saturate(${saturate.toFixed(2)}) brightness(${brightness.toFixed(2)}) contrast(${contrast.toFixed(2)}) hue-rotate(${hueShift}deg)`,
+    riftX: `${8 + ((seed >>> 3) % 72)}%`,
+    riftY: `${8 + ((seed >>> 8) % 28)}%`,
+    bloomX: `${64 + ((seed >>> 19) % 24)}%`,
+    bloomY: `${10 + ((seed >>> 24) % 26)}%`,
+  }
 }
 
 export function getAvatarForPlayer(playerId: string, avatarId?: string) {
