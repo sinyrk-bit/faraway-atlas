@@ -410,86 +410,88 @@ export function CardFace({
         </div>
       </div>
 
-      <header className="card-header">
-        <div>
-          <h3>{card.title}</h3>
-          <p>{card.subtitle}</p>
+      <section className="card-info-panel">
+        <header className="card-header">
+          <div>
+            <h3>{card.title}</h3>
+            <p>{card.subtitle}</p>
+          </div>
+          {'duration' in card ? (
+            <div className="card-meta">
+              <span className="card-duration">{card.duration}h</span>
+              <span className={`card-time card-time-${card.time}`}>{timeLabels[card.time]}</span>
+            </div>
+          ) : (
+            <div className="card-meta">
+              <span className="card-duration">{card.linkedBiome ? biomeMeta[card.linkedBiome].short : 'Neutral'}</span>
+            </div>
+          )}
+        </header>
+
+        <div className="card-symbol-board">
+          <div className="card-symbol-main">
+            <span className="card-score-badge">+{questPoints}</span>
+            <div className="card-score-track">
+              {questItems.length > 0 ? (
+                questItems.map((item) => <SymbolChip compact item={item} key={`${card.id}-quest-${item.key}`} />)
+              ) : (
+                <span className="card-symbol-empty">Fix</span>
+              )}
+            </div>
+          </div>
+          {prerequisiteItems.length > 0 ? (
+            <div className="card-symbol-row is-need" title="Benoetigt">
+              <span>!</span>
+              <div className="card-score-track">
+                {prerequisiteItems.map((item) => (
+                  <SymbolChip compact item={item} key={`${card.id}-need-${item.key}`} />
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {counters.length > 0 ? (
+            <div className="card-symbol-row is-gain" title="Gibt">
+              <span>+</span>
+              <div className="card-score-track">
+                {counters.map((item) => (
+                  <SymbolChip compact item={item} key={`${card.id}-counter-${item.key}`} />
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
-        {'duration' in card ? (
-          <div className="card-meta">
-            <span className="card-duration">{card.duration}h</span>
-            <span className={`card-time card-time-${card.time}`}>{timeLabels[card.time]}</span>
+
+        {card.cardType === 'region' ? (
+          <div className="card-flags">
+            <span className="card-flag" style={{ borderColor: biomeMeta[card.biome].accent }}>
+              {biomeMeta[card.biome].short}
+            </span>
+            {card.meteor ? <span className="card-flag card-flag-meteor">Meteor</span> : null}
+            <span className={`card-flag card-flag-${card.rarity}`}>{rarityLabels[card.rarity]}</span>
           </div>
         ) : (
-          <div className="card-meta">
-            <span className="card-duration">{card.linkedBiome ? biomeMeta[card.linkedBiome].short : 'Neutral'}</span>
+          <div className="card-flags">
+            {card.linkedBiome ? (
+              <span className="card-flag" style={{ borderColor: biomeMeta[card.linkedBiome].accent }}>
+                Zaehlt als {biomeMeta[card.linkedBiome].short}
+              </span>
+            ) : (
+              <span className="card-flag">Neutral</span>
+            )}
+            <span className={`card-flag card-flag-${card.rarity}`}>{rarityLabels[card.rarity]}</span>
           </div>
         )}
-      </header>
 
-      <div className="card-symbol-board">
-        <div className="card-symbol-main">
-          <span className="card-score-badge">+{questPoints}</span>
-          <div className="card-score-track">
-            {questItems.length > 0 ? (
-              questItems.map((item) => <SymbolChip compact item={item} key={`${card.id}-quest-${item.key}`} />)
-            ) : (
-              <span className="card-symbol-empty">Fixwert</span>
-            )}
-          </div>
-        </div>
-        {prerequisiteItems.length > 0 ? (
-          <div className="card-symbol-row is-need">
-            <span>Braucht</span>
-            <div className="card-score-track">
-              {prerequisiteItems.map((item) => (
-                <SymbolChip compact item={item} key={`${card.id}-need-${item.key}`} />
-              ))}
-            </div>
-          </div>
+        {!compact ? (
+          <section className="card-quest">
+            <strong>Auftrag</strong>
+            <p>{'quest' in card && card.quest ? card.quest.label : 'Liefert nur Stuetzsymbole.'}</p>
+            {'quest' in card && card.quest?.prerequisite ? <span>{card.quest.prerequisite.label}</span> : null}
+          </section>
         ) : null}
-        {counters.length > 0 ? (
-          <div className="card-symbol-row is-gain">
-            <span>Gibt</span>
-            <div className="card-score-track">
-              {counters.map((item) => (
-                <SymbolChip compact item={item} key={`${card.id}-counter-${item.key}`} />
-              ))}
-            </div>
-          </div>
-        ) : null}
-      </div>
 
-      {card.cardType === 'region' ? (
-        <div className="card-flags">
-          <span className="card-flag" style={{ borderColor: biomeMeta[card.biome].accent }}>
-            {biomeMeta[card.biome].short}
-          </span>
-          {card.meteor ? <span className="card-flag card-flag-meteor">Meteor</span> : null}
-          <span className={`card-flag card-flag-${card.rarity}`}>{rarityLabels[card.rarity]}</span>
-        </div>
-      ) : (
-        <div className="card-flags">
-          {card.linkedBiome ? (
-            <span className="card-flag" style={{ borderColor: biomeMeta[card.linkedBiome].accent }}>
-              Zaehlt als {biomeMeta[card.linkedBiome].short}
-            </span>
-          ) : (
-            <span className="card-flag">Neutral</span>
-          )}
-          <span className={`card-flag card-flag-${card.rarity}`}>{rarityLabels[card.rarity]}</span>
-        </div>
-      )}
-
-      {!compact ? (
-        <section className="card-quest">
-          <strong>Auftrag</strong>
-          <p>{'quest' in card && card.quest ? card.quest.label : 'Liefert nur Stuetzsymbole.'}</p>
-          {'quest' in card && card.quest?.prerequisite ? <span>{card.quest.prerequisite.label}</span> : null}
-        </section>
-      ) : null}
-
-      {!compact ? <footer className="card-flavor">{card.flavor}</footer> : null}
+        {!compact ? <footer className="card-flavor">{card.flavor}</footer> : null}
+      </section>
     </button>
   )
 }
