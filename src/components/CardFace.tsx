@@ -23,12 +23,6 @@ interface CardFaceProps {
   onClick?: () => void
 }
 
-const rarityLabels = {
-  common: 'Gewoehnlich',
-  rare: 'Selten',
-  mythic: 'Mythisch',
-} as const
-
 type IconArtKey = 'uddu' | 'okiko' | 'goldlog' | 'clue' | 'night' | 'sanctuary' | 'meteor'
 
 const iconArt: Record<IconArtKey, string> = {
@@ -312,10 +306,6 @@ export function CardFace({
   const questItems = buildQuestItems(quest)
   const prerequisiteItems = buildPrerequisiteItems(quest?.prerequisite)
   const questPoints = quest?.points ?? 0
-  const artDescription = card.cardType === 'region' ? card.quest.label : card.quest?.label ?? card.subtitle
-  const visibleCounterItems = counters.slice(0, 3)
-  const visibleQuestItems = questItems.slice(0, 3)
-  const visiblePrerequisiteItems = prerequisiteItems.slice(0, 3)
   const artStats: ArtStat[] =
     card.cardType === 'region'
       ? [
@@ -369,10 +359,6 @@ export function CardFace({
       type="button"
     >
       <div className="card-glow" />
-      <div className="card-topline">
-        <span className="card-type">{card.cardType === 'region' ? 'Region' : 'Refugium'}</span>
-        {'serial' in card ? <span className="card-serial">#{card.serial}</span> : null}
-      </div>
 
       <div className="card-art-wrap">
         <div className="card-art-shell">
@@ -397,59 +383,13 @@ export function CardFace({
               </span>
             ))}
           </div>
-          <div className="card-art-overlay card-art-overlay-intel">
-            <div className="card-art-data-rail">
-              <div className="card-art-data-group is-score">
-                <strong>+{questPoints}</strong>
-                {visibleQuestItems.length > 0 ? (
-                  visibleQuestItems.map((item) => (
-                    <SymbolChip compact item={item} key={`${card.id}-art-quest-${item.key}`} />
-                  ))
-                ) : (
-                  <span className="card-art-mini-label">Fix</span>
-                )}
-              </div>
-              {visiblePrerequisiteItems.length > 0 ? (
-                <div className="card-art-data-group is-need">
-                  <span>!</span>
-                  {visiblePrerequisiteItems.map((item) => (
-                    <SymbolChip compact item={item} key={`${card.id}-art-need-${item.key}`} />
-                  ))}
-                </div>
-              ) : null}
-              {visibleCounterItems.length > 0 ? (
-                <div className="card-art-data-group is-gain">
-                  <span>+</span>
-                  {visibleCounterItems.map((item) => (
-                    <SymbolChip compact item={item} key={`${card.id}-art-counter-${item.key}`} />
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          </div>
-          <div className="card-art-description">
-            <strong>{card.subtitle}</strong>
-            <span>{artDescription}</span>
-          </div>
           {'meteor' in card && card.meteor ? <span className="card-art-badge">Meteorspur</span> : null}
         </div>
       </div>
 
       <section className="card-info-panel">
         <header className="card-header">
-          <div>
-            <h3>{card.title}</h3>
-            <p>{card.subtitle}</p>
-          </div>
-          <div className="card-meta">
-            <span className="card-duration">
-              {card.cardType === 'region'
-                ? `#${card.serial}`
-                : card.linkedBiome
-                  ? biomeMeta[card.linkedBiome].short
-                  : 'Neutral'}
-            </span>
-          </div>
+          <h3>{card.title}</h3>
         </header>
 
         <div className="card-symbol-board">
@@ -465,7 +405,6 @@ export function CardFace({
           </div>
           {prerequisiteItems.length > 0 ? (
             <div className="card-symbol-row is-need" title="Benoetigt">
-              <span>!</span>
               <div className="card-score-track">
                 {prerequisiteItems.map((item) => (
                   <SymbolChip compact item={item} key={`${card.id}-need-${item.key}`} />
@@ -475,7 +414,6 @@ export function CardFace({
           ) : null}
           {counters.length > 0 ? (
             <div className="card-symbol-row is-gain" title="Gibt">
-              <span>+</span>
               <div className="card-score-track">
                 {counters.map((item) => (
                   <SymbolChip compact item={item} key={`${card.id}-counter-${item.key}`} />
@@ -484,37 +422,6 @@ export function CardFace({
             </div>
           ) : null}
         </div>
-
-        {card.cardType === 'region' ? (
-          <div className="card-flags">
-            <span className="card-flag" style={{ borderColor: biomeMeta[card.biome].accent }}>
-              {biomeMeta[card.biome].short}
-            </span>
-            {card.meteor ? <span className="card-flag card-flag-meteor">Meteor</span> : null}
-            <span className={`card-flag card-flag-${card.rarity}`}>{rarityLabels[card.rarity]}</span>
-          </div>
-        ) : (
-          <div className="card-flags">
-            {card.linkedBiome ? (
-              <span className="card-flag" style={{ borderColor: biomeMeta[card.linkedBiome].accent }}>
-                Zaehlt als {biomeMeta[card.linkedBiome].short}
-              </span>
-            ) : (
-              <span className="card-flag">Neutral</span>
-            )}
-            <span className={`card-flag card-flag-${card.rarity}`}>{rarityLabels[card.rarity]}</span>
-          </div>
-        )}
-
-        {!compact ? (
-          <section className="card-quest">
-            <strong>Auftrag</strong>
-            <p>{'quest' in card && card.quest ? card.quest.label : 'Liefert nur Stuetzsymbole.'}</p>
-            {'quest' in card && card.quest?.prerequisite ? <span>{card.quest.prerequisite.label}</span> : null}
-          </section>
-        ) : null}
-
-        {!compact ? <footer className="card-flavor">{card.flavor}</footer> : null}
       </section>
     </button>
   )
