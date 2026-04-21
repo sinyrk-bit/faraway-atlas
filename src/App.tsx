@@ -1224,7 +1224,7 @@ function App() {
         </div>
 
         <aside className="side-panel">
-          <div className="side-section">
+          <div className="side-section side-section-roster">
             <span>Tischuebersicht</span>
             <div className="roster-list">
               {match.players.map((player) => {
@@ -1270,7 +1270,7 @@ function App() {
             </div>
           </div>
 
-          <div className="side-section">
+          <div className="side-section side-section-market">
             <span>Marktpuls</span>
             <div className="market-mini-list">
               {match.market.length === 0 ? <p>Der Markt ist aktuell leer.</p> : null}
@@ -1293,7 +1293,7 @@ function App() {
             </div>
           </div>
 
-          <div className="side-section">
+          <div className="side-section side-section-log">
             <span>Expeditionslog</span>
             <div className="log-list">
               {match.log.slice(0, 4).map((entry) => (
@@ -1302,7 +1302,7 @@ function App() {
             </div>
           </div>
 
-          <div className="side-section">
+          <div className="side-section side-section-echo">
             <span>{viewedHuman ? `Echo-Ziffern von ${viewedHuman.name}` : 'Echo-Ziffern'}</span>
             <div className="digit-row">
               {humanEchoDigits.length === 0 ? <p>Noch keine Meteorechos.</p> : null}

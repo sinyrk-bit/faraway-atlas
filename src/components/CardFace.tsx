@@ -326,6 +326,9 @@ export function CardFace({
   const prerequisiteItems = buildPrerequisiteItems(quest?.prerequisite)
   const questPoints = quest?.points ?? 0
   const artDescription = card.cardType === 'region' ? card.quest.label : card.quest?.label ?? card.subtitle
+  const visibleCounterItems = counters.slice(0, 3)
+  const visibleQuestItems = questItems.slice(0, 3)
+  const visiblePrerequisiteItems = prerequisiteItems.slice(0, 3)
   const artStats =
     card.cardType === 'region'
       ? [
@@ -386,11 +389,40 @@ export function CardFace({
               </span>
             ))}
           </div>
-          <div className="card-art-overlay card-art-overlay-bottom">
-            <span className="card-art-stat card-art-stat-score">+{questPoints}</span>
-            {counters.slice(0, 3).map((item) => (
-              <SymbolChip compact item={item} key={`${card.id}-overlay-${item.key}`} />
-            ))}
+          <div className="card-art-overlay card-art-overlay-intel">
+            <div className="card-art-formula card-art-formula-score">
+              <span>Wertung</span>
+              <strong>+{questPoints}</strong>
+              <div className="card-art-formula-icons">
+                {visibleQuestItems.length > 0 ? (
+                  visibleQuestItems.map((item) => (
+                    <SymbolChip compact item={item} key={`${card.id}-art-quest-${item.key}`} />
+                  ))
+                ) : (
+                  <span className="card-art-mini-label">Fix</span>
+                )}
+              </div>
+            </div>
+            {visiblePrerequisiteItems.length > 0 ? (
+              <div className="card-art-formula card-art-formula-need">
+                <span>Braucht</span>
+                <div className="card-art-formula-icons">
+                  {visiblePrerequisiteItems.map((item) => (
+                    <SymbolChip compact item={item} key={`${card.id}-art-need-${item.key}`} />
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            {visibleCounterItems.length > 0 ? (
+              <div className="card-art-formula card-art-formula-gain">
+                <span>Gibt</span>
+                <div className="card-art-formula-icons">
+                  {visibleCounterItems.map((item) => (
+                    <SymbolChip compact item={item} key={`${card.id}-art-counter-${item.key}`} />
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
           <div className="card-art-description">
             <strong>{card.subtitle}</strong>
