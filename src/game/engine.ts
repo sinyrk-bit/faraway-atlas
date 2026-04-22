@@ -573,14 +573,6 @@ function applyDraftDecision(state: MatchState, playerId: string, selection: Draf
   const playerIndex = getPlayerIndex(nextState.players, playerId)
   const player = nextState.players[playerIndex]
 
-  if (selection.regionId) {
-    const marketIndex = nextState.market.findIndex((card) => card.id === selection.regionId)
-    if (marketIndex >= 0) {
-      const [picked] = nextState.market.splice(marketIndex, 1)
-      player.hand.push(picked)
-    }
-  }
-
   if (player.pendingSanctuaries.length > 0) {
     const choice = selection.sanctuaryId
       ? player.pendingSanctuaries.find((card) => card.id === selection.sanctuaryId)
@@ -591,6 +583,14 @@ function applyDraftDecision(state: MatchState, playerId: string, selection: Draf
     const rejected = player.pendingSanctuaries.filter((card) => card.id !== choice?.id)
     nextState.discardedSanctuaries.push(...rejected)
     player.pendingSanctuaries = []
+  }
+
+  if (selection.regionId) {
+    const marketIndex = nextState.market.findIndex((card) => card.id === selection.regionId)
+    if (marketIndex >= 0) {
+      const [picked] = nextState.market.splice(marketIndex, 1)
+      player.hand.push(picked)
+    }
   }
 
   nextState.draftIndex += 1
@@ -606,8 +606,8 @@ function applyDraftDecision(state: MatchState, playerId: string, selection: Draf
   let loggedState = nextState
   if (pickedRegion || pickedSanctuary) {
     const fragments = [
-      pickedRegion ? `zieht ${pickedRegion.title}` : undefined,
       pickedSanctuary ? `beansprucht ${pickedSanctuary.title}` : undefined,
+      pickedRegion ? `zieht ${pickedRegion.title}` : undefined,
     ].filter(Boolean)
     loggedState = updateLog(nextState, `${player.name} ${fragments.join(' und ')}.`)
   }
@@ -940,9 +940,18 @@ export function confirmReveal(state: MatchState) {
 }
 
 export function setHumanDraftSelection(state: MatchState, selection: DraftSelection): MatchState {
+  const activePlayerId = state.draftOrder[state.draftIndex]
+  const currentPlayer = activePlayerId ? state.players[getPlayerIndex(state.players, activePlayerId)] : undefined
+  const needsSanctuaryFirst = currentPlayer?.kind === 'human' && currentPlayer.pendingSanctuaries.length > 0
+  const nextSelection = { ...selection }
+
+  if (needsSanctuaryFirst && !nextSelection.sanctuaryId) {
+    delete nextSelection.regionId
+  }
+
   return {
     ...state,
-    humanDraftSelection: selection,
+    humanDraftSelection: nextSelection,
   }
 }
 

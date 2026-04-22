@@ -1231,50 +1231,26 @@ function App() {
     const selectedSanctuary = activeHumanPlayer.pendingSanctuaries.find((card) => card.id === humanDraftSelection.sanctuaryId)
     const needsRegion = activeMatch.round < activeMatch.maxRounds && activeMatch.market.length > 0
     const needsSanctuary = activeHumanPlayer.pendingSanctuaries.length > 0
+    const sanctuaryStepOpen = needsSanctuary && !selectedSanctuary
+    const marketLocked = isHumanTurn && sanctuaryStepOpen
+    const draftHeadline = isHumanTurn ? `${activeHumanPlayer.name}, du bist mit dem Draft dran.` : `${currentPlayer?.name} draftet gerade.`
+    const draftCopy = needsSanctuary
+      ? 'Sichere zuerst eines deiner offenen Refugien. Sobald es verriegelt ist, wird dein Marktpick freigeschaltet.'
+      : 'In dieser Runde gibt es kein Refugium. Du kannst direkt eine Region aus dem Markt nehmen.'
 
     return (
       <section className="phase-panel phase-draft" key={`draft-${activeMatch.round}-${currentPlayer?.id ?? 'none'}-${activeMatch.draftIndex}`}>
         <div className="phase-copy">
           <span className="phase-tag">Marktphase</span>
-          <h2>{isHumanTurn ? `${activeHumanPlayer.name}, du bist mit dem Draft dran.` : `${currentPlayer?.name} draftet gerade.`}</h2>
-          <p>
-            Die Draft-Reihenfolge beginnt bei der niedrigsten Kartennummer. Nimm eine Region aus dem Markt und sichere danach ein Refugium aus deinen Funden.
-          </p>
+          <h2>{draftHeadline}</h2>
+          <p>{draftCopy}</p>
         </div>
 
         <div className="draft-columns">
-          <div className="draft-column">
+          <div className="draft-column is-priority">
             <div className="column-heading">
-              <span>Markt</span>
-              <strong>{activeMatch.round === activeMatch.maxRounds ? 'In Runde 8 geschlossen' : 'Waehle eine Region'}</strong>
-            </div>
-            <div className="card-grid compact-grid">
-              {activeMatch.market.length === 0 ? <div className="strip-empty">In diesem Schritt gibt es keinen Marktdraft.</div> : null}
-              {activeMatch.market.map((card) => (
-                <CardFace
-                  card={card}
-                  compact
-                  key={card.id}
-                  onClick={
-                    isHumanTurn
-                      ? () => {
-                          playSound('select')
-                          updateHumanDraft({ regionId: card.id })
-                        }
-                      : undefined
-                  }
-                  selectable={isHumanTurn && activeMatch.round < activeMatch.maxRounds}
-                  selected={humanDraftSelection.regionId === card.id}
-                  dimmed={isHumanTurn && Boolean(humanDraftSelection.regionId) && humanDraftSelection.regionId !== card.id}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="draft-column">
-            <div className="column-heading">
-              <span>Offene Refugien</span>
-              <strong>{activeHumanPlayer.pendingSanctuaries.length > 0 ? 'Waehle eins zum Behalten' : 'Kein Refugiumsbonus in dieser Runde'}</strong>
+              <span>Schritt 1</span>
+              <strong>{needsSanctuary ? (selectedSanctuary ? 'Refugium gesichert' : 'Waehle ein Refugium') : 'Kein Refugium in dieser Runde'}</strong>
             </div>
             <div className="card-grid compact-grid">
               {activeHumanPlayer.pendingSanctuaries.length === 0 ? <div className="strip-empty">Hier gibt es nichts auszuwaehlen.</div> : null}
@@ -1297,24 +1273,64 @@ function App() {
               ))}
             </div>
           </div>
+
+          <div className={`draft-column ${marketLocked ? 'is-locked' : ''}`}>
+            <div className="column-heading">
+              <span>{needsSanctuary ? 'Schritt 2' : 'Markt'}</span>
+              <strong>
+                {activeMatch.round === activeMatch.maxRounds
+                  ? 'In Runde 8 geschlossen'
+                  : marketLocked
+                    ? 'Wird nach dem Refugium freigeschaltet'
+                    : 'Waehle eine Region'}
+              </strong>
+            </div>
+            {marketLocked ? <div className="draft-step-note">Waehle zuerst dein Refugium. Danach wird der Markt aktiv.</div> : null}
+            <div className="card-grid compact-grid">
+              {activeMatch.market.length === 0 ? <div className="strip-empty">In diesem Schritt gibt es keinen Marktdraft.</div> : null}
+              {activeMatch.market.map((card) => (
+                <CardFace
+                  card={card}
+                  compact
+                  key={card.id}
+                  onClick={
+                    isHumanTurn && !marketLocked
+                      ? () => {
+                          playSound('select')
+                          updateHumanDraft({ regionId: card.id })
+                        }
+                      : undefined
+                  }
+                  selectable={isHumanTurn && !marketLocked && activeMatch.round < activeMatch.maxRounds}
+                  selected={humanDraftSelection.regionId === card.id}
+                  dimmed={
+                    marketLocked ||
+                    (isHumanTurn && Boolean(humanDraftSelection.regionId) && humanDraftSelection.regionId !== card.id)
+                  }
+                />
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="draft-action-bar">
           <div className="draft-selection-status">
-            <span>Auswahlstatus</span>
+            <span>{needsSanctuary ? 'Zwei Schritte' : 'Auswahlstatus'}</span>
             <strong>
-              {needsRegion
-                ? selectedMarketCard
-                  ? `Region bereit: ${selectedMarketCard.title}`
-                  : 'Region fehlt'
-                : 'Kein Marktpick noetig'}
-            </strong>
-            <p>
               {needsSanctuary
                 ? selectedSanctuary
-                  ? `Refugium gesichert: ${selectedSanctuary.title}`
-                  : 'Refugium fehlt'
+                  ? `Refugium bereit: ${selectedSanctuary.title}`
+                  : 'Schritt 1 offen: Refugium waehlen'
                 : 'Kein Refugium in dieser Runde erforderlich'}
+            </strong>
+            <p>
+              {needsRegion
+                ? selectedMarketCard
+                  ? `Schritt 2 bereit: ${selectedMarketCard.title}`
+                  : marketLocked
+                    ? 'Schritt 2 wartet auf dein Refugium.'
+                    : 'Schritt 2 offen: Marktkarte waehlen.'
+                : 'Kein Marktpick noetig'}
             </p>
           </div>
 
@@ -1492,10 +1508,15 @@ function App() {
               {match.market.length === 0 ? <p>Der Markt ist aktuell leer.</p> : null}
               {match.market.map((card) => (
                 <button
-                  className="market-mini"
+                  className={`market-mini ${match.phase === 'draft' && currentPlayer?.kind === 'human' && currentPlayer.pendingSanctuaries.length > 0 && !match.humanDraftSelection.sanctuaryId ? 'is-locked' : ''}`}
+                  disabled={match.phase === 'draft' && currentPlayer?.kind === 'human' && currentPlayer.pendingSanctuaries.length > 0 && !match.humanDraftSelection.sanctuaryId}
                   key={card.id}
                   onClick={() => {
-                    if (match.phase === 'draft' && currentPlayer?.kind === 'human') {
+                    if (
+                      match.phase === 'draft' &&
+                      currentPlayer?.kind === 'human' &&
+                      !(currentPlayer.pendingSanctuaries.length > 0 && !match.humanDraftSelection.sanctuaryId)
+                    ) {
                       playSound('select')
                       updateHumanDraft({ regionId: card.id })
                     }
