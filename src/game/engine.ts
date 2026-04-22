@@ -2,6 +2,7 @@ import { buildRegionDeck, buildSanctuaryDeck, createSeededRandom, difficultyMeta
 import type {
   Biome,
   Difficulty,
+  DraftStage,
   DraftSelection,
   FinalStanding,
   MatchConfig,
@@ -66,6 +67,7 @@ function cloneState(state: MatchState): MatchState {
     log: [...state.log],
     revealEntries: [...state.revealEntries],
     draftOrder: [...state.draftOrder],
+    draftStage: state.draftStage,
     activeHumanPlayerId: state.activeHumanPlayerId,
     selectedRegionByPlayerId: { ...state.selectedRegionByPlayerId },
     openingSelectionIds: [...state.openingSelectionIds],
@@ -125,6 +127,10 @@ function totalClues(player: PlayerState) {
     player.tableau.reduce((sum, card) => sum + card.clues, 0) +
     player.sanctuaries.reduce((sum, card) => sum + card.clues, 0)
   )
+}
+
+function resolveDraftStage(state: MatchState): DraftStage {
+  return state.players.some((player) => player.pendingSanctuaries.length > 0) ? 'sanctuary' : 'market'
 }
 
 function buildScoreContext(visibleRegions: RegionCard[], sanctuaries: SanctuaryCard[]): ScoreContext {
@@ -546,6 +552,7 @@ function closeRound(state: MatchState): MatchState {
       revealEntries: [],
       draftOrder: [],
       draftIndex: 0,
+      draftStage: 'sanctuary',
       humanDraftSelection: {},
     }
 
@@ -562,6 +569,7 @@ function closeRound(state: MatchState): MatchState {
   nextState.revealEntries = []
   nextState.draftOrder = []
   nextState.draftIndex = 0
+  nextState.draftStage = 'sanctuary'
   nextState.humanDraftSelection = {}
   nextState.activeDigitEchoes = []
 
@@ -573,16 +581,45 @@ function applyDraftDecision(state: MatchState, playerId: string, selection: Draf
   const playerIndex = getPlayerIndex(nextState.players, playerId)
   const player = nextState.players[playerIndex]
 
-  if (player.pendingSanctuaries.length > 0) {
+  if (nextState.draftStage === 'sanctuary') {
     const choice = selection.sanctuaryId
       ? player.pendingSanctuaries.find((card) => card.id === selection.sanctuaryId)
       : undefined
+
     if (choice) {
       player.sanctuaries.push(choice)
     }
-    const rejected = player.pendingSanctuaries.filter((card) => card.id !== choice?.id)
-    nextState.discardedSanctuaries.push(...rejected)
+
+    if (player.pendingSanctuaries.length > 0) {
+      const rejected = player.pendingSanctuaries.filter((card) => card.id !== choice?.id)
+      nextState.discardedSanctuaries.push(...rejected)
+    }
+
     player.pendingSanctuaries = []
+    nextState.draftIndex += 1
+    nextState.humanDraftSelection = {}
+
+    let loggedState = nextState
+    if (choice) {
+      loggedState = updateLog(nextState, `${player.name} beansprucht ${choice.title}.`)
+    }
+
+    if (loggedState.draftIndex >= loggedState.draftOrder.length) {
+      const transitioned = {
+        ...loggedState,
+        draftStage: 'market' as const,
+        draftIndex: 0,
+        humanDraftSelection: {},
+      }
+
+      if (transitioned.round >= transitioned.maxRounds || transitioned.market.length === 0) {
+        return closeRound(transitioned)
+      }
+
+      return updateScorePreviews(updateLog(transitioned, 'Alle Refugien sind abgeschlossen. Der Markt oeffnet jetzt.'))
+    }
+
+    return updateScorePreviews(loggedState)
   }
 
   if (selection.regionId) {
@@ -599,17 +636,10 @@ function applyDraftDecision(state: MatchState, playerId: string, selection: Draf
   const pickedRegion = selection.regionId
     ? nextState.players[playerIndex].hand.find((card) => card.id === selection.regionId)
     : undefined
-  const pickedSanctuary = selection.sanctuaryId
-    ? nextState.players[playerIndex].sanctuaries.find((card) => card.id === selection.sanctuaryId)
-    : undefined
 
   let loggedState = nextState
-  if (pickedRegion || pickedSanctuary) {
-    const fragments = [
-      pickedSanctuary ? `beansprucht ${pickedSanctuary.title}` : undefined,
-      pickedRegion ? `zieht ${pickedRegion.title}` : undefined,
-    ].filter(Boolean)
-    loggedState = updateLog(nextState, `${player.name} ${fragments.join(' und ')}.`)
+  if (pickedRegion) {
+    loggedState = updateLog(nextState, `${player.name} zieht ${pickedRegion.title}.`)
   }
 
   if (loggedState.draftIndex >= loggedState.draftOrder.length) {
@@ -715,6 +745,7 @@ export function createMatch(config: MatchConfig): MatchState {
     revealEntries: [],
     draftOrder: [],
     draftIndex: 0,
+    draftStage: 'sanctuary',
     activeHumanPlayerId: undefined,
     selectedRegionId: undefined,
     selectedRegionByPlayerId: {},
@@ -855,10 +886,17 @@ export function confirmRegionChoice(state: MatchState): MatchState {
 }
 
 export function beginDraftPhase(state: MatchState): MatchState {
-  return {
-    ...state,
-    phase: 'draft',
+  const next = cloneState(state)
+  next.phase = 'draft'
+  next.draftIndex = 0
+  next.humanDraftSelection = {}
+  next.draftStage = resolveDraftStage(next)
+
+  if (next.draftStage === 'market' && (next.round >= next.maxRounds || next.market.length === 0)) {
+    return closeRound(next)
   }
+
+  return next
 }
 
 export function confirmReveal(state: MatchState) {
@@ -919,6 +957,7 @@ export function confirmReveal(state: MatchState) {
 
   next.draftIndex = 0
   next.humanDraftSelection = {}
+  next.draftStage = resolveDraftStage(next)
   next.phase = 'reveal'
   next.activeHumanPlayerId = undefined
   next.activeDigitEchoes = Array.from(
@@ -940,18 +979,16 @@ export function confirmReveal(state: MatchState) {
 }
 
 export function setHumanDraftSelection(state: MatchState, selection: DraftSelection): MatchState {
-  const activePlayerId = state.draftOrder[state.draftIndex]
-  const currentPlayer = activePlayerId ? state.players[getPlayerIndex(state.players, activePlayerId)] : undefined
-  const needsSanctuaryFirst = currentPlayer?.kind === 'human' && currentPlayer.pendingSanctuaries.length > 0
-  const nextSelection = { ...selection }
-
-  if (needsSanctuaryFirst && !nextSelection.sanctuaryId) {
-    delete nextSelection.regionId
-  }
-
   return {
     ...state,
-    humanDraftSelection: nextSelection,
+    humanDraftSelection:
+      state.draftStage === 'sanctuary'
+        ? selection.sanctuaryId
+          ? { sanctuaryId: selection.sanctuaryId }
+          : {}
+        : selection.regionId
+          ? { regionId: selection.regionId }
+          : {},
   }
 }
 
@@ -962,8 +999,8 @@ export function confirmHumanDraft(state: MatchState) {
     return state
   }
 
-  const needsRegion = state.round < state.maxRounds && state.market.length > 0
-  const needsSanctuary = currentPlayer.pendingSanctuaries.length > 0
+  const needsRegion = state.draftStage === 'market' && state.round < state.maxRounds && state.market.length > 0
+  const needsSanctuary = state.draftStage === 'sanctuary' && currentPlayer.pendingSanctuaries.length > 0
   const { regionId, sanctuaryId } = state.humanDraftSelection
 
   if (needsRegion && !regionId) {
@@ -974,7 +1011,11 @@ export function confirmHumanDraft(state: MatchState) {
     return state
   }
 
-  return applyDraftDecision(state, activePlayerId, { regionId, sanctuaryId })
+  return applyDraftDecision(
+    state,
+    activePlayerId,
+    state.draftStage === 'sanctuary' ? { sanctuaryId } : { regionId },
+  )
 }
 
 export function runNextAiDraft(state: MatchState) {
@@ -985,10 +1026,13 @@ export function runNextAiDraft(state: MatchState) {
     return state
   }
 
-  return applyDraftDecision(state, activePlayerId, {
-    regionId: aiChooseDraftRegion(player, state),
-    sanctuaryId: aiChooseSanctuary(player, state),
-  })
+  return applyDraftDecision(
+    state,
+    activePlayerId,
+    state.draftStage === 'sanctuary'
+      ? { sanctuaryId: aiChooseSanctuary(player, state) }
+      : { regionId: aiChooseDraftRegion(player, state) },
+  )
 }
 
 export function getCurrentPlayer(state: MatchState) {
@@ -1047,8 +1091,8 @@ export function humanDraftCanConfirm(state: MatchState) {
     return false
   }
 
-  const needsRegion = state.round < state.maxRounds && state.market.length > 0
-  const needsSanctuary = human.pendingSanctuaries.length > 0
+  const needsRegion = state.draftStage === 'market' && state.round < state.maxRounds && state.market.length > 0
+  const needsSanctuary = state.draftStage === 'sanctuary' && human.pendingSanctuaries.length > 0
 
   if (needsRegion && !state.humanDraftSelection.regionId) {
     return false

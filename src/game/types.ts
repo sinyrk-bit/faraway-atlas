@@ -144,6 +144,8 @@ export interface DraftSelection {
   sanctuaryId?: string
 }
 
+export type DraftStage = 'sanctuary' | 'market'
+
 export type Phase =
   | 'menu'
   | 'opening-hand'
@@ -203,6 +205,7 @@ export interface MatchState {
   revealEntries: RevealEntry[]
   draftOrder: string[]
   draftIndex: number
+  draftStage: DraftStage
   activeHumanPlayerId?: string
   selectedRegionId?: string
   selectedRegionByPlayerId: Record<string, string>
