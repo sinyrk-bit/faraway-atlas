@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "generate:card-art": "powershell -ExecutionPolicy Bypass -File scripts/generate-card-art.ps1",
     "lint": "eslint .",
     "start": "node scripts/start-server.mjs",
     "preview": "vite preview --host 0.0.0.0"
