@@ -5448,3 +5448,259 @@
     font-size: 1.16rem;
   }
 }
+
+/* Card correction pass: number/time/gain positions match the physical-card read order. */
+.card-art-overlay-top,
+.card-face.is-compact .card-art-overlay-top,
+.card-face.is-minimal .card-art-overlay-top {
+  display: grid;
+  grid-template-columns: auto minmax(2.8rem, 1fr) minmax(3.6rem, auto);
+  align-items: start;
+  gap: 0.28rem;
+  left: 0.52rem;
+  right: 0.52rem;
+  top: 0.52rem;
+}
+
+.card-top-left-badges,
+.card-top-center-badges,
+.card-top-gain-row {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  align-items: flex-start;
+}
+
+.card-top-left-badges {
+  justify-self: start;
+  gap: 0;
+}
+
+.card-top-center-badges {
+  justify-self: center;
+  padding-top: 0.34rem;
+}
+
+.card-top-gain-row {
+  justify-self: end;
+  justify-content: flex-end;
+  gap: 0.18rem;
+  max-width: 7.2rem;
+  flex-wrap: wrap;
+}
+
+.card-top-left-badges .card-art-stat.is-time {
+  order: 0;
+  width: 2.55rem;
+  height: 2.55rem;
+  flex: 0 0 2.55rem;
+  margin-top: 0.56rem;
+  margin-right: -0.5rem;
+  z-index: 3;
+}
+
+.card-top-left-badges .card-art-stat.is-serial {
+  order: 1;
+  z-index: 2;
+}
+
+.card-art-stat.is-serial,
+.card-face.is-compact .card-art-stat.is-serial,
+.card-face.is-minimal .card-art-stat.is-serial {
+  width: 4.7rem;
+  height: 4.7rem;
+  flex-basis: 4.7rem;
+  border-width: 4px;
+}
+
+.card-art-stat.is-serial .card-art-stat-text,
+.card-face.is-compact .card-art-stat.is-serial .card-art-stat-text,
+.card-face.is-minimal .card-art-stat.is-serial .card-art-stat-text {
+  display: block;
+  font-size: 2.24rem;
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: -0.1em;
+  transform: translateX(-0.04em);
+}
+
+.card-art-stat.is-serial::before {
+  left: 0.28rem;
+  bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.card-top-left-badges .card-art-stat.is-time .card-art-stat-symbol,
+.card-top-left-badges .card-art-stat.is-time .card-art-stat-text {
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 1.6rem;
+}
+
+.card-top-center-badges .card-art-stat.is-biome,
+.card-art-stat.is-biome {
+  width: 3.55rem;
+  height: 2.85rem;
+  flex-basis: 3.55rem;
+  margin-top: 0;
+  border-width: 3px;
+  font-size: 1.95rem;
+}
+
+.card-top-center-badges .card-art-stat.is-biome .card-art-stat-text {
+  line-height: 1;
+  transform: translateY(-0.02em);
+}
+
+.card-top-gain-row .symbol-chip.is-compact {
+  position: relative;
+  min-height: 0;
+  padding: 0;
+  gap: 0.08rem;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.card-top-gain-row .symbol-chip.is-compact .symbol-chip-sigil {
+  width: 2.55rem;
+  height: 2.55rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 1.45rem;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 10px color-mix(in srgb, var(--symbol-accent) 52%, transparent));
+}
+
+.card-top-gain-row .symbol-chip-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.card-top-gain-row .symbol-chip-value {
+  min-width: 1.12rem;
+  align-self: center;
+  margin-left: -0.38rem;
+  color: #fff8d5;
+  font-size: 1.24rem;
+  font-weight: 950;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.95), 0 0 9px color-mix(in srgb, var(--symbol-accent) 48%, transparent);
+}
+
+.card-art-symbol-overlay,
+.card-face.is-compact .card-art-symbol-overlay,
+.card-face.is-minimal .card-art-symbol-overlay {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "need"
+    "score";
+  align-items: end;
+}
+
+.card-art-symbol-cluster.is-score,
+.card-face.is-compact .card-art-symbol-cluster.is-score,
+.card-face.is-minimal .card-art-symbol-cluster.is-score {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 0.38rem;
+  max-width: 100%;
+}
+
+.card-art-symbol-cluster.is-need,
+.card-face.is-compact .card-art-symbol-cluster.is-need,
+.card-face.is-minimal .card-art-symbol-cluster.is-need {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.24rem;
+}
+
+.card-art-symbol-cluster.is-score .card-score-badge::before {
+  content: none;
+  display: none;
+}
+
+.card-art-symbol-cluster.is-score.has-formula .card-score-badge::before {
+  content: '=';
+  display: block;
+}
+
+.card-art-symbol-cluster.is-score.is-flat-score {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  padding-left: 0;
+}
+
+.card-art-symbol-cluster .symbol-chip.is-compact .symbol-chip-sigil,
+.card-face.is-compact .card-art-symbol-cluster .symbol-chip.is-compact .symbol-chip-sigil,
+.card-face.is-minimal .card-art-symbol-cluster .symbol-chip.is-compact .symbol-chip-sigil {
+  width: 2.9rem;
+  height: 2.9rem;
+  font-size: 1.34rem;
+}
+
+.card-art-symbol-cluster .card-score-badge,
+.card-face.is-compact .card-art-symbol-cluster .card-score-badge,
+.card-face.is-minimal .card-art-symbol-cluster .card-score-badge {
+  width: 3.35rem;
+  min-width: 3.35rem;
+  height: 3.35rem;
+  min-height: 3.35rem;
+  font-size: 1.95rem;
+}
+
+.card-art-symbol-cluster .symbol-chip-value,
+.card-face.is-compact .card-art-symbol-cluster .symbol-chip-value,
+.card-face.is-minimal .card-art-symbol-cluster .symbol-chip-value {
+  font-size: 1.55rem;
+}
+
+@media (max-width: 760px), (max-height: 620px) {
+  .card-art-stat.is-serial,
+  .card-face.is-compact .card-art-stat.is-serial,
+  .card-face.is-minimal .card-art-stat.is-serial {
+    width: 3.95rem;
+    height: 3.95rem;
+    flex-basis: 3.95rem;
+  }
+
+  .card-art-stat.is-serial .card-art-stat-text,
+  .card-face.is-compact .card-art-stat.is-serial .card-art-stat-text,
+  .card-face.is-minimal .card-art-stat.is-serial .card-art-stat-text {
+    font-size: 1.82rem;
+  }
+
+  .card-top-left-badges .card-art-stat.is-time {
+    width: 2.18rem;
+    height: 2.18rem;
+    flex-basis: 2.18rem;
+    margin-right: -0.42rem;
+  }
+
+  .card-top-left-badges .card-art-stat.is-time .card-art-stat-symbol,
+  .card-top-left-badges .card-art-stat.is-time .card-art-stat-text {
+    width: 2.1rem;
+    height: 2.1rem;
+  }
+
+  .card-top-center-badges .card-art-stat.is-biome,
+  .card-art-stat.is-biome {
+    width: 3rem;
+    height: 2.46rem;
+    flex-basis: 3rem;
+    font-size: 1.62rem;
+  }
+
+  .card-top-gain-row .symbol-chip.is-compact .symbol-chip-sigil {
+    width: 2.18rem;
+    height: 2.18rem;
+  }
+
+  .card-top-gain-row .symbol-chip-value {
+    font-size: 1.06rem;
+  }
+}

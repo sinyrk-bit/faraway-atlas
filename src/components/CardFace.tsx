@@ -49,9 +49,9 @@ const iconMeta = {
   clue: { glyph: 'CL', accent: '#9eeaff', label: 'Spur', iconKey: 'clue' as const },
   night: { glyph: 'NT', accent: '#93a2ff', label: 'Nacht', iconKey: 'night' as const },
   sanctuary: { glyph: 'RF', accent: '#ffd78d', label: 'Refugium', iconKey: 'sanctuary' as const },
-  digit: { glyph: '##', accent: '#ffd85f', label: 'Endziffer' },
-  set: { glyph: 'S4', accent: '#9dff9a', label: 'Viererset' },
-  flat: { glyph: 'FX', accent: '#f2f6ff', label: 'Fixwert' },
+  digit: { glyph: '0-9', accent: '#ffd85f', label: 'Endziffer' },
+  set: { glyph: '4x', accent: '#9dff9a', label: 'Viererset' },
+  flat: { glyph: '*', accent: '#f2f6ff', label: 'Fixwert' },
 } as const
 
 type SymbolItem = {
@@ -141,14 +141,7 @@ function buildQuestItems(quest?: Quest) {
     case 'per-biome':
       return quest.biomes.map((biome) => buildBiomeItem(biome))
     case 'set':
-      return [
-        {
-          key: `quest-${quest.type}`,
-          glyph: iconMeta.set.glyph,
-          label: iconMeta.set.label,
-          accent: iconMeta.set.accent,
-        },
-      ]
+      return (['river', 'city', 'forest', 'desert'] as Biome[]).map((biome) => buildBiomeItem(biome))
     case 'per-night':
       return [
         {
@@ -179,14 +172,7 @@ function buildQuestItems(quest?: Quest) {
         },
       ]
     case 'flat':
-      return [
-        {
-          key: `quest-${quest.type}`,
-          glyph: iconMeta.flat.glyph,
-          label: iconMeta.flat.label,
-          accent: iconMeta.flat.accent,
-        },
-      ]
+      return []
     default:
       return []
   }
@@ -310,8 +296,6 @@ export function CardFace({
   const artStats: ArtStat[] =
     card.cardType === 'region'
       ? [
-          { key: 'serial', label: `${card.serial}`, title: `Karte ${card.serial}`, className: 'is-serial' },
-          { key: 'biome', label: biomeSigils[card.biome], title: biomeMeta[card.biome].label, className: 'is-biome' },
           {
             key: 'time',
             iconSrc: card.time === 'night' ? moonSymbolIcon : sunSymbolIcon,
@@ -319,6 +303,8 @@ export function CardFace({
             imageClassName: 'card-art-stat-symbol',
             className: 'is-time',
           },
+          { key: 'serial', label: `${card.serial}`, title: `Karte ${card.serial}`, className: 'is-serial' },
+          { key: 'biome', label: biomeSigils[card.biome], title: biomeMeta[card.biome].label, className: 'is-biome' },
         ]
       : [
           { key: 'sanctuary', iconSrc: sanctuaryIcon, title: 'Refugium', imageClassName: 'card-art-stat-symbol', className: 'is-serial' },
@@ -348,6 +334,8 @@ export function CardFace({
   ]
     .filter(Boolean)
     .join(' ')
+  const topLeftStats = artStats.filter((item) => ['time', 'serial', 'sanctuary', 'rarity'].includes(item.key))
+  const topCenterStats = artStats.filter((item) => item.key === 'biome')
 
   return (
     <button
@@ -381,16 +369,37 @@ export function CardFace({
             }}
           />
           <div className="card-art-overlay card-art-overlay-top">
-            {artStats.map((item) => (
-              <span
-                className={['card-art-stat', item.className].filter(Boolean).join(' ')}
-                key={`${card.id}-${item.key}`}
-                title={item.title}
-              >
-                {item.iconSrc ? <img alt="" className={item.imageClassName ?? 'card-art-stat-symbol'} src={item.iconSrc} /> : null}
-                {item.label ? <span className="card-art-stat-text">{item.label}</span> : null}
-              </span>
-            ))}
+            <div className="card-top-left-badges">
+              {topLeftStats.map((item) => (
+                <span
+                  className={['card-art-stat', item.className].filter(Boolean).join(' ')}
+                  key={`${card.id}-${item.key}`}
+                  title={item.title}
+                >
+                  {item.iconSrc ? <img alt="" className={item.imageClassName ?? 'card-art-stat-symbol'} src={item.iconSrc} /> : null}
+                  {item.label ? <span className="card-art-stat-text">{item.label}</span> : null}
+                </span>
+              ))}
+            </div>
+            <div className="card-top-center-badges">
+              {topCenterStats.map((item) => (
+                <span
+                  className={['card-art-stat', item.className].filter(Boolean).join(' ')}
+                  key={`${card.id}-${item.key}`}
+                  title={item.title}
+                >
+                  {item.iconSrc ? <img alt="" className={item.imageClassName ?? 'card-art-stat-symbol'} src={item.iconSrc} /> : null}
+                  {item.label ? <span className="card-art-stat-text">{item.label}</span> : null}
+                </span>
+              ))}
+            </div>
+            {counters.length > 0 ? (
+              <div className="card-top-gain-row" title="Gibt">
+                {counters.map((item) => (
+                  <SymbolChip compact item={item} key={`${card.id}-counter-top-${item.key}`} />
+                ))}
+              </div>
+            ) : null}
           </div>
           {'meteor' in card && card.meteor ? (
             <span className="card-art-badge" title="Meteorspur">
@@ -399,7 +408,10 @@ export function CardFace({
           ) : null}
           <div className="card-art-symbol-overlay" aria-label={card.title}>
             {quest ? (
-              <div className="card-art-symbol-cluster is-score" title="Punkte">
+              <div
+                className={`card-art-symbol-cluster is-score ${questItems.length > 0 ? 'has-formula' : 'is-flat-score'}`}
+                title="Punkte"
+              >
                 <span className="card-score-badge" title={`${questPoints} Punkte`}>
                   <span className="card-score-star">✦</span>
                   <span>{questPoints}</span>
@@ -413,13 +425,6 @@ export function CardFace({
               <div className="card-art-symbol-cluster is-need" title="Benoetigt">
                 {prerequisiteItems.map((item) => (
                   <SymbolChip compact item={item} key={`${card.id}-need-${item.key}`} />
-                ))}
-              </div>
-            ) : null}
-            {counters.length > 0 ? (
-              <div className="card-art-symbol-cluster is-gain" title="Gibt">
-                {counters.map((item) => (
-                  <SymbolChip compact item={item} key={`${card.id}-counter-${item.key}`} />
                 ))}
               </div>
             ) : null}
