@@ -4938,6 +4938,105 @@
   }
 }
 
+.symbol-chip-icon,
+.card-art-stat-symbol {
+  object-fit: contain;
+}
+
+.symbol-chip-sigil {
+  overflow: visible;
+}
+
+.card-score-badge {
+  gap: 0.12rem;
+}
+
+.card-score-star {
+  color: rgba(255, 226, 122, 0.98);
+  font-size: 0.9em;
+  line-height: 1;
+  text-shadow: 0 0 10px rgba(255, 216, 95, 0.55);
+}
+
+.card-art-stat {
+  min-width: 2.36rem;
+  min-height: 1.72rem;
+}
+
+.card-art-stat-symbol {
+  width: 1.36rem;
+  height: 1.36rem;
+}
+
+.card-art-symbol-cluster {
+  gap: 0.22rem;
+  min-height: 1.72rem;
+  padding: 0.14rem 0.2rem;
+}
+
+.card-art-symbol-cluster .card-score-badge {
+  min-width: 2.24rem;
+  min-height: 1.92rem;
+  font-size: 1.02rem;
+}
+
+.card-art-symbol-cluster .symbol-chip.is-compact {
+  min-height: 1.54rem;
+  padding: 0.1rem 0.22rem;
+}
+
+.card-art-symbol-cluster .symbol-chip.is-compact .symbol-chip-sigil {
+  width: 1.24rem;
+  height: 1.24rem;
+}
+
+.card-art-symbol-cluster .symbol-chip-value {
+  font-size: 0.96rem;
+}
+
+.card-face.is-compact .card-art-stat,
+.card-face.is-minimal .card-art-stat {
+  min-width: 2.12rem;
+  min-height: 1.52rem;
+}
+
+.card-face.is-compact .card-art-stat-symbol,
+.card-face.is-minimal .card-art-stat-symbol {
+  width: 1.18rem;
+  height: 1.18rem;
+}
+
+.card-face.is-compact .card-art-symbol-cluster,
+.card-face.is-minimal .card-art-symbol-cluster {
+  gap: 0.16rem;
+  min-height: 1.42rem;
+  padding: 0.1rem 0.16rem;
+}
+
+.card-face.is-compact .card-art-symbol-cluster .card-score-badge,
+.card-face.is-minimal .card-art-symbol-cluster .card-score-badge {
+  min-width: 1.92rem;
+  min-height: 1.62rem;
+  font-size: 0.84rem;
+}
+
+.card-face.is-compact .card-art-symbol-cluster .symbol-chip.is-compact,
+.card-face.is-minimal .card-art-symbol-cluster .symbol-chip.is-compact {
+  min-height: 1.28rem;
+  padding: 0.07rem 0.14rem;
+}
+
+.card-face.is-compact .card-art-symbol-cluster .symbol-chip.is-compact .symbol-chip-sigil,
+.card-face.is-minimal .card-art-symbol-cluster .symbol-chip.is-compact .symbol-chip-sigil {
+  width: 1.02rem;
+  height: 1.02rem;
+}
+
+.card-face.is-compact .card-art-symbol-cluster .symbol-chip-value,
+.card-face.is-minimal .card-art-symbol-cluster .symbol-chip-value {
+  font-size: 0.76rem;
+}
+
 @media (max-width: 760px), (max-height: 620px) {
   .screen-menu {
     padding-bottom: calc(3.4rem + env(safe-area-inset-bottom));

@@ -1,12 +1,12 @@
 import type { CSSProperties } from 'react'
-import clueIcon from '../assets/icons/clue-icon.jpg'
-import goldlogIcon from '../assets/icons/goldlog-icon.jpg'
-import meteorIcon from '../assets/icons/meteor-icon.jpg'
-import moonSymbolIcon from '../assets/icons/moon-symbol.png'
-import okikoIcon from '../assets/icons/okiko-icon.jpg'
-import sanctuaryIcon from '../assets/icons/sanctuary-icon.jpg'
-import sunSymbolIcon from '../assets/icons/sun-symbol.png'
-import udduIcon from '../assets/icons/uddu-icon.jpg'
+import clueIcon from '../assets/icons/clue-icon.png'
+import goldlogIcon from '../assets/icons/goldlog-icon.png'
+import meteorIcon from '../assets/icons/meteor-icon.png'
+import moonSymbolIcon from '../assets/icons/moon-symbol-clean.png'
+import okikoIcon from '../assets/icons/okiko-icon.png'
+import sanctuaryIcon from '../assets/icons/sanctuary-icon.png'
+import sunSymbolIcon from '../assets/icons/sun-symbol-clean.png'
+import udduIcon from '../assets/icons/uddu-icon.png'
 import { biomeMeta, resourceMeta } from '../game/content'
 import { getCardArtTreatment } from '../game/visuals'
 import type { Biome, PlayCard, Prerequisite, Quest, RegionCard, ResourceType, SanctuaryCard } from '../game/types'
@@ -400,7 +400,10 @@ export function CardFace({
           <div className="card-art-symbol-overlay" aria-label={card.title}>
             {quest ? (
               <div className="card-art-symbol-cluster is-score" title="Punkte">
-                <span className="card-score-badge">+{questPoints}</span>
+                <span className="card-score-badge" title={`${questPoints} Punkte`}>
+                  <span className="card-score-star">✦</span>
+                  <span>{questPoints}</span>
+                </span>
                 {questItems.map((item) => (
                   <SymbolChip compact item={item} key={`${card.id}-quest-${item.key}`} />
                 ))}
