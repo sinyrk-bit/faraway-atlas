@@ -310,7 +310,7 @@ export function CardFace({
   const artStats: ArtStat[] =
     card.cardType === 'region'
       ? [
-          { key: 'serial', label: `#${card.serial}`, title: `Karte ${card.serial}`, className: 'is-serial' },
+          { key: 'serial', label: `${card.serial}`, title: `Karte ${card.serial}`, className: 'is-serial' },
           { key: 'biome', label: biomeSigils[card.biome], title: biomeMeta[card.biome].label, className: 'is-biome' },
           {
             key: 'time',
