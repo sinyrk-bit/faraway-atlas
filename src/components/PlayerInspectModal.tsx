@@ -63,7 +63,7 @@ export function PlayerInspectModal({ player, mode, echoDigits, onClose }: Player
           </div>
 
           <button className="ghost-button" onClick={onClose} type="button">
-            Schliessen
+            Schließen
           </button>
         </header>
 
@@ -118,11 +118,11 @@ export function PlayerInspectModal({ player, mode, echoDigits, onClose }: Player
 
         <section className="player-inspect-section">
           <div className="strip-heading">
-            <span>Refugien</span>
-            <strong>{player.sanctuaries.length > 0 ? 'Unterstuetzung und Endspielpunkte' : 'Noch keine Refugien gesichert'}</strong>
+            <span>Heiligtümer</span>
+            <strong>{player.sanctuaries.length > 0 ? 'Unterstützung und Endspielpunkte' : 'Noch keine Heiligtümer gesichert'}</strong>
           </div>
           <div className="inspect-card-grid inspect-card-grid-sanctuaries">
-            {player.sanctuaries.length === 0 ? <div className="strip-empty">Noch keine Refugien vorhanden.</div> : null}
+            {player.sanctuaries.length === 0 ? <div className="strip-empty">Noch keine Heiligtümer vorhanden.</div> : null}
             {player.sanctuaries.map((card) => (
               <CardFace card={card} compact key={card.id} />
             ))}

@@ -48,7 +48,7 @@ const iconMeta = {
   goldlog: { glyph: 'GL', accent: resourceMeta.goldlog.accent, label: 'Goldlog', iconKey: 'goldlog' as const },
   clue: { glyph: 'CL', accent: '#9eeaff', label: 'Spur', iconKey: 'clue' as const },
   night: { glyph: 'NT', accent: '#93a2ff', label: 'Nacht', iconKey: 'night' as const },
-  sanctuary: { glyph: 'RF', accent: '#ffd78d', label: 'Refugium', iconKey: 'sanctuary' as const },
+  sanctuary: { glyph: 'RF', accent: '#ffd78d', label: 'Heiligtum', iconKey: 'sanctuary' as const },
   digit: { glyph: '0-9', accent: '#ffd85f', label: 'Endziffer' },
   set: { glyph: '4x', accent: '#9dff9a', label: 'Viererset' },
   flat: { glyph: '*', accent: '#f2f6ff', label: 'Fixwert' },
@@ -307,7 +307,7 @@ export function CardFace({
           { key: 'biome', label: biomeSigils[card.biome], title: biomeMeta[card.biome].label, className: 'is-biome' },
         ]
       : [
-          { key: 'sanctuary', iconSrc: sanctuaryIcon, title: 'Refugium', imageClassName: 'card-art-stat-symbol', className: 'is-serial' },
+          { key: 'sanctuary', iconSrc: sanctuaryIcon, title: 'Heiligtum', imageClassName: 'card-art-stat-symbol', className: 'is-serial' },
           {
             key: 'biome',
             label: card.linkedBiome ? biomeSigils[card.linkedBiome] : '◇',
@@ -317,7 +317,7 @@ export function CardFace({
           {
             key: 'rarity',
             label: card.rarity === 'rare' ? '◆◆' : '◆',
-            title: card.rarity === 'rare' ? 'Selten' : 'Gewoehnlich',
+            title: card.rarity === 'rare' ? 'Selten' : 'Gewöhnlich',
             className: 'is-time',
           },
         ]
@@ -359,7 +359,7 @@ export function CardFace({
       <div className="card-art-wrap">
         <div className="card-art-shell">
           <img
-            alt={card.cardType === 'region' ? `${card.title} Biombild` : `${card.title} Refugiumsbild`}
+            alt={card.cardType === 'region' ? `${card.title} Biombild` : `${card.title} Heiligtumsbild`}
             className="card-art-image"
             src={art.src}
             style={{
@@ -422,7 +422,7 @@ export function CardFace({
               </div>
             ) : null}
             {prerequisiteItems.length > 0 ? (
-              <div className="card-art-symbol-cluster is-need" title="Benoetigt">
+              <div className="card-art-symbol-cluster is-need" title="Benötigt">
                 {prerequisiteItems.map((item) => (
                   <SymbolChip compact item={item} key={`${card.id}-need-${item.key}`} />
                 ))}

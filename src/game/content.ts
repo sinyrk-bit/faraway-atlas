@@ -37,7 +37,7 @@ export const modeMeta: Record<
     title: 'Klassische Expedition',
     summary: 'Der reine Acht-Runden-Lauf durch Alula.',
     accent: '#36f3ff',
-    detail: 'Der Grundmodus mit Rückwärtswertung, Refugien und taktischem Marktdraft.',
+    detail: 'Der Grundmodus mit Rückwärtswertung, Heiligtümern und taktischem Marktdraft.',
   },
   advanced: {
     title: 'Erweiterter Auftakt',
@@ -65,7 +65,7 @@ export const difficultyMeta: Record<
   },
   pathfinder: {
     label: 'Pathfinder',
-    summary: 'Ausgewogene KI, die Refugien und sauberes Timing hoch bewertet.',
+    summary: 'Ausgewogene KI, die Heiligtümer und sauberes Timing hoch bewertet.',
     volatility: 3,
     precision: 0.82,
   },
@@ -100,15 +100,51 @@ const biomeNouns: Record<Biome, string[]> = {
 }
 
 const sanctuaryTitles = [
-  'Himmelsrefugium',
+  'Himmelsheiligtum',
   'Echoherd',
-  'Glaslaub-Rückzug',
-  'Mondbrunnen-Klause',
+  'Glaslaub-Klause',
+  'Mondbrunnen-Heiligtum',
   'Laternenhohlraum',
   'Atlas-Schrein',
   'Stilles Observatorium',
   'Dämmerhorst',
   'Fernklang-Hafen',
+  'Kristallarkade',
+  'Nebelkuppel',
+  'Sonnenarchiv',
+  'Schattenaltar',
+  'Myzeltempel',
+  'Chrompagode',
+  'Sternenbrücke',
+  'Obsidianorakel',
+  'Flüsterzisterne',
+  'Neonmonolith',
+  'Goldlicht-Kammer',
+  'Tiefenreliquiar',
+  'Morgenwacht',
+  'Dämmergarten',
+  'Auralith-Halle',
+  'Kaskadenheiligtum',
+  'Schwebeturm',
+  'Runenatrium',
+  'Wolkenklause',
+  'Funkenschrein',
+  'Saphirbecken',
+  'Phantomdom',
+  'Signalnest',
+  'Jadekapelle',
+  'Dünenoratorium',
+  'Nachtquell',
+  'Holo-Sanktuar',
+  'Glasfarn-Hain',
+  'Aurorapforte',
+  'Silbermyzel',
+  'Echokuppel',
+  'Kometenaltar',
+  'Lichtbrunnen',
+  'Schleierwarte',
+  'Tempel der Pfade',
+  'Letztes Heiligtum',
 ]
 
 const sanctuarySubtitles = [
@@ -237,7 +273,7 @@ function buildQuest(serial: number, biome: Biome, meteor: boolean): Quest {
     case 9:
       return {
         type: 'per-sanctuary',
-        label: '5 Ruhm für jedes Refugium.',
+        label: '5 Ruhm für jedes Heiligtum.',
         points: 5,
         prerequisite: {
           type: 'resource',
@@ -260,12 +296,12 @@ function buildQuest(serial: number, biome: Biome, meteor: boolean): Quest {
     default:
       return {
         type: 'flat',
-        label: '14 Ruhm, wenn du mindestens 2 Refugien besitzt.',
+        label: '14 Ruhm, wenn du mindestens 2 Heiligtümer besitzt.',
         points: meteor ? 16 : 14,
         prerequisite: {
           type: 'sanctuary',
           count: 2,
-          label: 'Benötigt mindestens 2 Refugien.',
+          label: 'Benötigt mindestens 2 Heiligtümer.',
         },
       }
   }
@@ -340,7 +376,7 @@ function buildSanctuaryQuest(index: number, linkedBiome?: Biome): Quest | undefi
     case 2:
       return {
         type: 'per-sanctuary',
-        label: '4 Ruhm für jedes Refugium.',
+        label: '4 Ruhm für jedes Heiligtum.',
         points: 4,
       }
     case 3:
@@ -378,7 +414,7 @@ function buildSanctuaryCard(index: number): SanctuaryCard {
   return {
     id: `sanctuary-${index + 1}`,
     cardType: 'sanctuary',
-    title: sanctuaryTitles[index % sanctuaryTitles.length],
+    title: sanctuaryTitles[index] ?? `Heiligtum ${index + 1}`,
     subtitle: sanctuarySubtitles[index % sanctuarySubtitles.length],
     flavor: 'Kartografen verlassen diese Orte mit mehr Gewissheit, als sie mitgebracht haben.',
     linkedBiome,

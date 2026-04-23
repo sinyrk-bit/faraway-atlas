@@ -125,7 +125,7 @@ export function PlayerRow({
           </div>
 
           <div className="sanctuary-chip-row">
-            {player.sanctuaries.length === 0 ? <div className="strip-empty compact-empty">Noch keine Refugien.</div> : null}
+            {player.sanctuaries.length === 0 ? <div className="strip-empty compact-empty">Noch keine Heiligtümer.</div> : null}
             {player.sanctuaries.map((card) => (
               <div className="sanctuary-chip" key={card.id}>
                 <strong>{card.title}</strong>
@@ -137,7 +137,7 @@ export function PlayerRow({
       ) : (
         <div className="player-collapsed-strip">
           <span>{latestRoute ? `Letzte Karte #${latestRoute.serial}` : 'Noch keine gespielte Region.'}</span>
-          <strong>{player.sanctuaries.length > 0 ? `${player.sanctuaries.length} Refugien sichtbar` : 'Keine Refugien'}</strong>
+          <strong>{player.sanctuaries.length > 0 ? `${player.sanctuaries.length} Heiligtümer sichtbar` : 'Keine Heiligtümer'}</strong>
         </div>
       )}
     </section>

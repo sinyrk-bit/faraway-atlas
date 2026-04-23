@@ -81,7 +81,7 @@ const phaseLabels: Record<MatchState['phase'], string> = {
 
 const modeCinematicLine: Record<MatchMode, string> = {
   classic: 'Acht Runden. Eine makellose Route. Kein zweiter Versuch.',
-  advanced: 'Mehr Auftakt, mehr Druck, mehr Raum fuer praezise Perfektion.',
+  advanced: 'Mehr Auftakt, mehr Druck, mehr Raum für präzise Perfektion.',
   starfall: 'Meteore bleiben sichtbar und jede Endziffer kann das Endspiel kippen.',
 }
 
@@ -92,7 +92,7 @@ function getPhaseLabel(match: MatchState) {
     return phaseLabels[match.phase]
   }
 
-  return match.draftStage === 'sanctuary' ? 'Refugiumphase' : 'Marktphase'
+  return match.draftStage === 'sanctuary' ? 'Heiligtumsphase' : 'Marktphase'
 }
 
 function readInviteProfilePatch() {
@@ -245,8 +245,8 @@ function RevealSummary({ match }: { match: MatchState }) {
             </div>
             <p>
               {entry.foundSanctuary
-                ? `${entry.sanctuaryCount} Refugiumsoption${entry.sanctuaryCount === 1 ? '' : 'en'} freigeschaltet.`
-                : 'In dieser Runde wurde kein Refugium gefunden.'}
+                ? `${entry.sanctuaryCount} Heiligtumsoption${entry.sanctuaryCount === 1 ? '' : 'en'} freigeschaltet.`
+                : 'In dieser Runde wurde kein Heiligtum gefunden.'}
             </p>
           </article>
         )
@@ -267,12 +267,12 @@ function RulesDrawer({ open }: { open: boolean }) {
         <p>Spiele pro Runde eine Region, decke gleichzeitig auf und drafte danach in aufsteigender Kartennummer aus dem Markt.</p>
       </div>
       <div className="rules-block">
-        <span>Refugien</span>
-        <p>Refugien findest du nur dann, wenn deine neue Karte eine hoehere Nummer als deine zuvor gespielte Region hat.</p>
+        <span>Heiligtümer</span>
+        <p>Heiligtümer findest du nur dann, wenn deine neue Karte eine höhere Nummer als deine zuvor gespielte Region hat.</p>
       </div>
       <div className="rules-block">
         <span>Wertung</span>
-        <p>Am Ende werten Regionenkarten von rechts nach links. Frühere Karten sehen nur bereits aufgedeckte Regionen plus alle Refugien.</p>
+        <p>Am Ende werten Regionenkarten von rechts nach links. Frühere Karten sehen nur bereits aufgedeckte Regionen plus alle Heiligtümer.</p>
       </div>
       <div className="rules-block">
         <span>Sternensturz</span>
@@ -300,7 +300,7 @@ function getRevealActionLabel(reveal: ScoreRevealState, standing: FinalStanding 
   }
 
   if (reveal.playerIndex < totalPlayers - 1) {
-    return 'Naechster Spieler'
+    return 'Nächster Spieler'
   }
 
   return 'Endscore anzeigen'
@@ -315,7 +315,7 @@ function ScoreRevealEntry({ entry, index }: { entry: ScoreEntry; index: number }
         <p>{entry.reason}</p>
       </div>
       <div className="score-entry-points">
-        <span>{entry.sourceType === 'region' ? 'Region' : 'Refugium'}</span>
+        <span>{entry.sourceType === 'region' ? 'Region' : 'Heiligtum'}</span>
         <strong>{formatScore(entry.points)}</strong>
       </div>
     </article>
@@ -376,7 +376,7 @@ function ScoreRevealCeremony({
           </div>
           <p>
             {upcomingEntry
-              ? `Naechste Karte: ${upcomingEntry.sourceName}`
+              ? `Nächste Karte: ${upcomingEntry.sourceName}`
               : `${activeStanding.playerName} ist komplett gewertet.`}
           </p>
         </section>
@@ -384,11 +384,11 @@ function ScoreRevealCeremony({
         <section className="score-reveal-stack">
           <div className="score-stack-head">
             <span>{revealedEntries.length} / {activeStanding.entries.length} Karten offen</span>
-            <strong>{upcomingEntry ? 'Naechste Enthuellung bereit' : 'Spielerwertung abgeschlossen'}</strong>
+            <strong>{upcomingEntry ? 'Nächste Enthüllung bereit' : 'Spielerwertung abgeschlossen'}</strong>
           </div>
           <div className="score-reveal-list">
             {revealedEntries.length === 0 ? (
-              <div className="score-empty-state">Noch keine Karte geoeffnet. Der erste Klick startet die Zaehlersequenz.</div>
+              <div className="score-empty-state">Noch keine Karte geöffnet. Der erste Klick startet die Zählersequenz.</div>
             ) : null}
             {revealedEntries.map((entry, index) => (
               <ScoreRevealEntry entry={entry} index={index} key={`${activeStanding.playerId}-${entry.sourceId}`} />
@@ -454,26 +454,26 @@ function buildPhaseAnnouncement(match: MatchState, activeName?: string): PhaseAn
       return {
         token: `opening-${match.round}-${match.activeHumanPlayerId ?? 'none'}`,
         title: 'Auftaktsequenz',
-        detail: `${activeName ?? 'Der aktive Platz'} kalibriert die Startregionen fuer Runde ${match.round}.`,
+        detail: `${activeName ?? 'Der aktive Platz'} kalibriert die Startregionen für Runde ${match.round}.`,
       }
     case 'choose-region':
       return {
         token: `choose-${match.round}-${match.activeHumanPlayerId ?? 'none'}`,
         title: `Runde ${match.round} · Routenwahl`,
-        detail: `${activeName ?? 'Der aktive Platz'} plant den naechsten Vorstoss durch ${modeMeta[match.config.mode].title}.`,
+        detail: `${activeName ?? 'Der aktive Platz'} plant den nächsten Vorstoss durch ${modeMeta[match.config.mode].title}.`,
       }
     case 'reveal':
       return {
         token: `reveal-${match.round}-${match.revealEntries.length}`,
         title: 'Synchrones Aufdecken',
-        detail: 'Die Tischreihenfolge enthuellt sich jetzt ueber die Kartennummern.',
+        detail: 'Die Tischreihenfolge enthüllt sich jetzt über die Kartennummern.',
       }
     case 'draft':
       return match.draftStage === 'sanctuary'
         ? {
             token: `draft-sanctuary-${match.round}-${match.draftIndex}`,
-            title: 'Phase 2 · Refugium',
-            detail: `${activeName ?? 'Der aktuelle Platz'} schliesst jetzt die Refugiumphase ab.`,
+            title: 'Phase 2 · Heiligtum',
+            detail: `${activeName ?? 'Der aktuelle Platz'} schließt jetzt die Heiligtumsphase ab.`,
           }
         : {
             token: `draft-market-${match.round}-${match.draftIndex}`,
@@ -484,7 +484,7 @@ function buildPhaseAnnouncement(match: MatchState, activeName?: string): PhaseAn
       return {
         token: `finished-${match.round}`,
         title: 'Atlas abgeschlossen',
-        detail: 'Rueckwaertswertung, Refugien und Meteorechos haben das Endspiel beschlossen.',
+        detail: 'Rückwärtswertung, Heiligtümer und Meteorechos haben das Endspiel beschlossen.',
       }
     default:
       return {
@@ -662,17 +662,17 @@ function App() {
   const tacticalObjective = !match
     ? ''
     : match.phase === 'opening-hand'
-      ? 'Waehle eine perfekt skalierte Auftakthand und halte die Flex-Kurve offen.'
+      ? 'Wähle eine perfekt skalierte Auftakthand und halte die Flex-Kurve offen.'
       : match.phase === 'choose-region'
-        ? 'Spiele Nummern bewusst ansteigend, wenn du Refugien freischalten willst.'
+        ? 'Spiele Nummern bewusst ansteigend, wenn du Heiligtümer freischalten willst.'
         : match.phase === 'reveal'
           ? 'Lies die Nummernreihenfolge, bevor der Markt aufspringt, und plane den Premium-Pick.'
           : match.phase === 'draft'
             ? match.draftStage === 'sanctuary'
-              ? 'Jetzt werden erst alle Refugien sauber abgeschlossen, bevor der Markt startet.'
-              : 'Der Markt laeuft jetzt streng in Reihenfolge der kleinsten gespielten Karte.'
+              ? 'Jetzt werden erst alle Heiligtümer sauber abgeschlossen, bevor der Markt startet.'
+              : 'Der Markt läuft jetzt streng in Reihenfolge der kleinsten gespielten Karte.'
             : match.phase === 'finished'
-              ? 'Analysiere die Rueckwaertswertung und justiere die naechste Revanche.'
+              ? 'Analysiere die Rückwärtswertung und justiere die nächste Revanche.'
               : ''
   const commandRailItems = !match
     ? []
@@ -706,7 +706,7 @@ function App() {
 
     playSound('lock')
     setInvitePromptOpen(false)
-    setInviteStatus('Profil fuer diesen Tisch gesetzt.')
+    setInviteStatus('Profil für diesen Tisch gesetzt.')
     window.setTimeout(() => setInviteStatus(''), 1800)
   }
 
@@ -820,7 +820,7 @@ function App() {
             <p className="eyebrow">Inoffizieller Neon-Prototyp</p>
             <h1>Faraway Atlas</h1>
             <p className="hero-text">
-              Eine kompakte Browser-Edition im dunklen Neon-Look mit Rueckwaertswertung, Refugium-Ketten, mehreren Varianten und KI-Rivalen fuer direkte Live-Tests.
+              Eine kompakte Browser-Edition im dunklen Neon-Look mit Rückwärtswertung, Heiligtum-Ketten, mehreren Varianten und KI-Rivalen für direkte Live-Tests.
             </p>
             <div className="hero-signal-row">
               <article className="hero-signal-card">
@@ -898,7 +898,7 @@ function App() {
                   }}
                   selectedId={profile.preferredAvatarId}
                 />
-                <p className="field-hint">Wird fuer deinen Sitz und fuer geteilte Tischlinks verwendet.</p>
+                <p className="field-hint">Wird für deinen Sitz und für geteilte Tischlinks verwendet.</p>
               </div>
 
               <label className="field">
@@ -1032,7 +1032,7 @@ function App() {
               <div className="phase-copy">
                 <span className="phase-tag">Freundesitz verbinden</span>
                 <h2>Wie soll dein Platz an diesem Tisch heissen?</h2>
-                <p>Waehle deinen Namen und ein Avatar-Signet, bevor du den geteilten Atlas betrittst.</p>
+                <p>Wähle deinen Namen und ein Avatar-Signet, bevor du den geteilten Atlas betrittst.</p>
               </div>
 
               <label className="field">
@@ -1047,7 +1047,7 @@ function App() {
               </label>
 
               <div className="field field-avatar">
-                <span>Avatar waehlen</span>
+                <span>Avatar wählen</span>
                 <AvatarPicker
                   onSelect={(avatarId) => {
                     playSound('tap')
@@ -1059,7 +1059,7 @@ function App() {
 
               <div className="phase-actions modal-actions">
                 <button className="primary-button" onClick={confirmInviteProfile} type="button">
-                  Profil uebernehmen
+                  Profil übernehmen
                 </button>
                 <button
                   className="ghost-button"
@@ -1141,8 +1141,8 @@ function App() {
       <section className="phase-panel phase-panel-opening" key={`opening-${activeMatch.round}-${activeHumanPlayer.id}`}>
         <div className="phase-copy">
           <span className="phase-tag">Auftaktdraft</span>
-          <h2>{activeHumanPlayer.name}, behalte drei deiner fuenf Startregionen.</h2>
-          <p>Der erweiterte Modus legt das Puzzle nach vorn. Reiche das Geraet nach dem Verriegeln weiter, wenn mehrere Freunde lokal spielen.</p>
+          <h2>{activeHumanPlayer.name}, behalte drei deiner fünf Startregionen.</h2>
+          <p>Der erweiterte Modus legt das Puzzle nach vorn. Reiche das Gerät nach dem Verriegeln weiter, wenn mehrere Freunde lokal spielen.</p>
         </div>
         <div className="seat-banner">Steuerung an {activeHumanPlayer.name}</div>
         <div className="card-grid">
@@ -1180,9 +1180,9 @@ function App() {
     return (
       <section className="phase-panel phase-panel-choose" key={`choose-${activeMatch.round}-${activeHumanPlayer.id}`}>
         <div className="phase-copy">
-          <span className="phase-tag">Region waehlen</span>
-          <h2>{activeHumanPlayer.name}, plane deinen naechsten Schritt.</h2>
-          <p>Niedrige Kartennummer bedeutet fruehere Draft-Prioritaet. Eine hoehere Nummer als deine letzte Karte oeffnet Refugien.</p>
+          <span className="phase-tag">Region wählen</span>
+          <h2>{activeHumanPlayer.name}, plane deinen nächsten Schritt.</h2>
+          <p>Niedrige Kartennummer bedeutet frühere Draft-Priorität. Eine höhere Nummer als deine letzte Karte öffnet Heiligtümer.</p>
         </div>
         <div className="seat-banner">Aktiver Platz: {activeHumanPlayer.name}</div>
         <div className="card-grid">
@@ -1225,14 +1225,14 @@ function App() {
   }
 
   function renderReveal(activeMatch: MatchState) {
-    const nextStageLabel = activeMatch.draftStage === 'sanctuary' ? 'Refugiumphase' : 'Marktphase'
+    const nextStageLabel = activeMatch.draftStage === 'sanctuary' ? 'Heiligtumsphase' : 'Marktphase'
 
     return (
       <section className="phase-panel phase-panel-reveal" key={`reveal-${activeMatch.round}`}>
         <div className="phase-copy">
           <span className="phase-tag">Aufdecken</span>
-          <h2>Der Tisch loest sich in Nummernreihenfolge auf.</h2>
-          <p>Kleine Nummern sind spaeter zuerst am Markt. Refugien werden vorher komplett abgehandelt und nur steigende Nummern oeffnen sie.</p>
+          <h2>Der Tisch löst sich in Nummernreihenfolge auf.</h2>
+          <p>Kleine Nummern sind später zuerst am Markt. Heiligtümer werden vorher komplett abgehandelt und nur steigende Nummern öffnen sie.</p>
         </div>
         <RevealSummary match={activeMatch} />
         <button
@@ -1265,33 +1265,33 @@ function App() {
       ? `${draftPlayer.name} ist jetzt am Zug.`
       : `${currentPlayer?.name ?? draftPlayer.name} spielt diesen Schritt gerade aus.`
     const draftCopy = isSanctuaryStage
-      ? 'Refugien werden jetzt der Reihe nach abgeschlossen. Nur eine hoehere Zahl als deine zuletzt gelegte Region oeffnet diese Auswahl.'
+      ? 'Heiligtümer werden jetzt der Reihe nach abgeschlossen. Nur eine höhere Zahl als deine zuletzt gelegte Region öffnet diese Auswahl.'
       : 'Jetzt wird in aufsteigender Zahlenreihenfolge aus dem Markt gezogen. Erst wenn alle fertig sind, geht die Runde weiter.'
     const confirmLabel = isSanctuaryStage
       ? needsSanctuary
-        ? 'Refugium bestaetigen'
-        : 'Phase 2 abschliessen'
+        ? 'Heiligtum bestätigen'
+        : 'Phase 2 abschließen'
       : needsRegion
-        ? 'Markt bestaetigen'
-        : 'Runde abschliessen'
+        ? 'Markt bestätigen'
+        : 'Runde abschließen'
     const statusTitle = isSanctuaryStage
       ? needsSanctuary
         ? selectedSanctuary
-          ? `Refugium bereit: ${selectedSanctuary.title}`
-          : 'Waehle jetzt ein Refugium.'
-        : 'Kein Refugium in dieser Runde.'
+          ? `Heiligtum bereit: ${selectedSanctuary.title}`
+          : 'Wähle jetzt ein Heiligtum.'
+        : 'Kein Heiligtum in dieser Runde.'
       : needsRegion
         ? selectedMarketCard
           ? `Marktkarte bereit: ${selectedMarketCard.title}`
-          : 'Waehle jetzt eine Marktkarte.'
+          : 'Wähle jetzt eine Marktkarte.'
         : 'Kein Marktpick in dieser Runde.'
     const statusCopy = isSanctuaryStage
       ? needsSanctuary
         ? 'Phase 3 startet erst, wenn jeder Platz Phase 2 abgeschlossen hat.'
-        : 'Dieser Platz hat in Phase 2 nichts offen. Danach geht es fuer alle gesammelt in Phase 3.'
+        : 'Dieser Platz hat in Phase 2 nichts offen. Danach geht es für alle gesammelt in Phase 3.'
       : needsRegion
         ? 'Die Reihenfolge bleibt bis zum Ende der Marktphase strikt erhalten.'
-        : 'Nach dieser Bestaetigung wird die Runde direkt abgeschlossen.'
+        : 'Nach dieser Bestätigung wird die Runde direkt abgeschlossen.'
 
     return (
       <section
@@ -1300,7 +1300,7 @@ function App() {
       >
         <div className="phase-copy draft-phase-copy">
           <div className="draft-phase-meta">
-            <span className="phase-tag">{isSanctuaryStage ? 'Phase 2 / Refugium' : 'Phase 3 / Markt'}</span>
+            <span className="phase-tag">{isSanctuaryStage ? 'Phase 2 / Heiligtum' : 'Phase 3 / Markt'}</span>
             <span className="draft-turn-pill">{draftLead}</span>
           </div>
           <p>{draftCopy}</p>
@@ -1309,7 +1309,7 @@ function App() {
         <div className="draft-sequence">
           {[
             { step: '1', label: 'Karte ablegen', state: 'done' },
-            { step: '2', label: 'Refugium', state: isSanctuaryStage ? 'active' : 'done' },
+            { step: '2', label: 'Heiligtum', state: isSanctuaryStage ? 'active' : 'done' },
             { step: '3', label: 'Markt', state: isSanctuaryStage ? 'pending' : 'active' },
           ].map((entry) => (
             <div className={`draft-sequence-step is-${entry.state}`} key={entry.step}>
@@ -1323,7 +1323,7 @@ function App() {
           <div className="draft-stage-header">
             <div>
               <span>{isSanctuaryStage ? 'Phase 2' : 'Phase 3'}</span>
-              <strong>{isSanctuaryStage ? 'Refugium nehmen' : 'Markt ziehen'}</strong>
+              <strong>{isSanctuaryStage ? 'Heiligtum nehmen' : 'Markt ziehen'}</strong>
             </div>
             <div className="draft-stage-progress">
               <span>Reihenfolge</span>
@@ -1336,8 +1336,8 @@ function App() {
           <p className="draft-stage-copy">
             {isSanctuaryStage
               ? needsSanctuary
-                ? `${draftPlayer.name} darf jetzt genau ein Refugium sichern.`
-                : `${draftPlayer.name} hat in dieser Runde kein Refugium und gibt die Phase direkt frei.`
+                ? `${draftPlayer.name} darf jetzt genau ein Heiligtum sichern.`
+                : `${draftPlayer.name} hat in dieser Runde kein Heiligtum und gibt die Phase direkt frei.`
               : needsRegion
                 ? `${draftPlayer.name} ist jetzt mit dem Marktpick dran.`
                 : 'In dieser Runde gibt es keinen Marktpick mehr.'}
@@ -1349,7 +1349,7 @@ function App() {
             }`}
           >
             {isSanctuaryStage && draftPlayer.pendingSanctuaries.length === 0 ? (
-              <div className="strip-empty">Hier gibt es in Phase 2 nichts auszuwaehlen.</div>
+              <div className="strip-empty">Hier gibt es in Phase 2 nichts auszuwählen.</div>
             ) : null}
             {!isSanctuaryStage && activeMatch.market.length === 0 ? (
               <div className="strip-empty">In Phase 3 gibt es in dieser Runde keinen Marktdraft.</div>
@@ -1434,11 +1434,11 @@ function App() {
       <section className="phase-panel phase-finished" key={`finished-${activeMatch.round}`}>
         <div className="phase-copy">
           <span className="phase-tag">{finalScreenVisible ? 'Endscore' : 'Live-Wertung'}</span>
-          <h2>{finalScreenVisible ? `${winnerName} fuehrt den Atlas an.` : 'Oeffne die Wertung Karte fuer Karte.'}</h2>
+          <h2>{finalScreenVisible ? `${winnerName} führt den Atlas an.` : 'Öffne die Wertung Karte für Karte.'}</h2>
           <p>
             {finalScreenVisible
               ? dailySummary.join('  |  ')
-              : 'Der Host klickt weiter, alle koennen die gleiche Spannungswertung am Tisch verfolgen.'}
+              : 'Der Host klickt weiter, alle können die gleiche Spannungswertung am Tisch verfolgen.'}
           </p>
         </div>
         {finalScreenVisible ? <FinalScoreboard standings={standings} /> : <ScoreRevealCeremony reveal={scoreReveal} standings={standings} />}
@@ -1457,7 +1457,7 @@ function App() {
               <section className="final-rematch-panel">
                 <div className="final-rematch-copy">
                   <span>Neustart</span>
-                  <strong>Waehle direkt deine naechste Variante.</strong>
+                  <strong>Wähle direkt deine nächste Variante.</strong>
                 </div>
                 <div className="final-variant-grid">
                   {restartModeOrder.map((mode) => (
@@ -1485,7 +1485,7 @@ function App() {
                 }}
                 type="button"
               >
-                Zurueck zum Menue
+                Zurück zum Menü
               </button>
             </>
           )}
@@ -1527,7 +1527,7 @@ function App() {
 
         <aside className="side-panel">
           <div className="side-section side-section-roster">
-            <span>Tischuebersicht</span>
+            <span>Tischübersicht</span>
             <div className="roster-list">
               {match.players.map((player) => {
                 const avatar = getAvatarForPlayer(player.id, player.avatarId)

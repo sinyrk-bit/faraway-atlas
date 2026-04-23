@@ -39,7 +39,7 @@ export interface CardArtTreatment {
 export const availableAvatars = [
   { id: 'cyber-01', label: 'Cyan Visier', src: avatarCyber1 },
   { id: 'cyber-02', label: 'Nacht-Orakel', src: avatarCyber2 },
-  { id: 'cyber-03', label: 'Duenenlaeufer', src: avatarCyber3 },
+  { id: 'cyber-03', label: 'Dünenläufer', src: avatarCyber3 },
   { id: 'cyber-04', label: 'Myzel-Scout', src: avatarCyber4 },
   { id: 'cyber-05', label: 'Kanal-Pilot', src: avatarCyber5 },
   { id: 'cyber-06', label: 'Archivistin', src: avatarCyber6 },
@@ -62,6 +62,13 @@ const generatedCardArt = import.meta.glob('../assets/card-art/generated/*.jpg', 
   import: 'default',
   query: '?url',
 }) as Record<string, string>
+
+const generatedCardArtById = Object.fromEntries(
+  Object.entries(generatedCardArt).map(([path, src]) => {
+    const fileName = path.split('/').pop() ?? ''
+    return [fileName.replace(/\.jpg$/i, ''), src]
+  }),
+)
 
 function hashString(value: string) {
   let hash = 2166136261
@@ -95,7 +102,7 @@ export function getAvatarById(avatarId?: string) {
 }
 
 export function getCardArt(card: PlayCard) {
-  const generated = generatedCardArt[`../assets/card-art/generated/${card.id}.jpg`]
+  const generated = generatedCardArtById[card.id] ?? generatedCardArt[`../assets/card-art/generated/${card.id}.jpg`]
   if (generated) {
     return generated
   }
@@ -113,10 +120,12 @@ export function getCardArt(card: PlayCard) {
 export function getCardArtTreatment(card: PlayCard): CardArtTreatment {
   const seed = buildCardVisualSeed(card)
   const src = getCardArt(card)
+  const focusX = card.cardType === 'sanctuary' ? 43 + (seed % 15) : 50
+  const focusY = card.cardType === 'sanctuary' ? 42 + ((seed >>> 5) % 18) : 50
 
   return {
     src,
-    position: '50% 50%',
+    position: `${focusX}% ${focusY}%`,
     transform: 'none',
     filter: 'saturate(1.04) contrast(1.02)',
     riftX: `${8 + ((seed >>> 3) % 72)}%`,

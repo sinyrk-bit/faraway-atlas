@@ -607,7 +607,7 @@ function applyDraftDecision(state: MatchState, playerId: string, selection: Draf
         return closeRound(transitioned)
       }
 
-      return updateScorePreviews(updateLog(transitioned, 'Alle Refugien sind abgeschlossen. Der Markt oeffnet jetzt.'))
+      return updateScorePreviews(updateLog(transitioned, 'Alle Heiligtümer sind abgeschlossen. Der Markt öffnet jetzt.'))
     }
 
     return updateScorePreviews(loggedState)
@@ -962,7 +962,7 @@ export function confirmReveal(state: MatchState) {
     loggedState = updateLog(
       loggedState,
       entry.foundSanctuary
-        ? `${player.name} erkundet ${entry.card.title} und findet ${entry.sanctuaryCount} Refugiumsoption${entry.sanctuaryCount === 1 ? '' : 'en'}.`
+        ? `${player.name} erkundet ${entry.card.title} und findet ${entry.sanctuaryCount} Heiligtumsoption${entry.sanctuaryCount === 1 ? '' : 'en'}.`
         : `${player.name} erkundet ${entry.card.title}.`,
     )
   })
