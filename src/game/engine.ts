@@ -2,7 +2,6 @@ import { buildRegionDeck, buildSanctuaryDeck, createSeededRandom, difficultyMeta
 import type {
   Biome,
   Difficulty,
-  DraftStage,
   DraftSelection,
   FinalStanding,
   MatchConfig,
@@ -127,10 +126,6 @@ function totalClues(player: PlayerState) {
     player.tableau.reduce((sum, card) => sum + card.clues, 0) +
     player.sanctuaries.reduce((sum, card) => sum + card.clues, 0)
   )
-}
-
-function resolveDraftStage(state: MatchState): DraftStage {
-  return state.players.some((player) => player.pendingSanctuaries.length > 0) ? 'sanctuary' : 'market'
 }
 
 function buildScoreContext(visibleRegions: RegionCard[], sanctuaries: SanctuaryCard[]): ScoreContext {
@@ -289,27 +284,8 @@ function scoreQuest(quest: Quest | undefined, context: ScoreContext, serial: num
   }
 }
 
-function playerVisibleEchoDigits(player: PlayerState, starfall: boolean) {
-  if (!starfall) {
-    return []
-  }
-
-  const digits = player.tableau.filter((card) => card.meteor).map((card) => card.serial % 10)
-  return Array.from(new Set(digits))
-}
-
-export function scorePlayer(player: PlayerState, starfall: boolean) {
+export function scorePlayer(player: PlayerState) {
   const visible = new Set<string>()
-  const echoDigits = playerVisibleEchoDigits(player, starfall)
-
-  if (starfall) {
-    player.tableau.forEach((card) => {
-      if (card.meteor || echoDigits.includes(card.serial % 10)) {
-        visible.add(card.id)
-      }
-    })
-  }
-
   const entries: ScoreEntry[] = []
 
   for (let index = player.tableau.length - 1; index >= 0; index -= 1) {
@@ -354,12 +330,11 @@ export function scorePlayer(player: PlayerState, starfall: boolean) {
 }
 
 function updateScorePreviews(state: MatchState): MatchState {
-  const starfall = state.config.mode === 'starfall'
   return {
     ...state,
     players: state.players.map((player) => ({
       ...player,
-      scorePreview: scorePlayer(player, starfall).total,
+      scorePreview: scorePlayer(player).total,
     })),
   }
 }
@@ -379,10 +354,10 @@ function evaluateRegionValue(
   const clueBoost = card.clues * 1.4
   const resourceBoost = card.resources.uddu * 1.2 + card.resources.okiko * 1.8 + card.resources.goldlog * 2.2
   const initiativeBoost = round < maxRounds ? Math.max(0, 69 - card.serial) * 0.075 : 0
-  const meteorBoost = mode === 'starfall' && card.meteor ? 4.5 : 0
   const nightBoost = card.time === 'night' ? 0.8 : 0
 
-  return base + sanctuaryBoost + clueBoost + resourceBoost + initiativeBoost + meteorBoost + nightBoost
+  void mode
+  return base + sanctuaryBoost + clueBoost + resourceBoost + initiativeBoost + nightBoost
 }
 
 function evaluateSanctuaryValue(player: PlayerState, card: SanctuaryCard, mode: MatchConfig['mode']) {
@@ -395,9 +370,9 @@ function evaluateSanctuaryValue(player: PlayerState, card: SanctuaryCard, mode: 
   const resourceBoost = card.resources.uddu * 1.4 + card.resources.okiko * 2.0 + card.resources.goldlog * 2.5
   const biomeBoost = card.linkedBiome ? 2.1 : 0
   const nightBoost = card.bonusNight * 2
-  const starfallBoost = mode === 'starfall' && card.bonusNight > 0 ? 1 : 0
 
-  return baseQuest + clueBoost + resourceBoost + biomeBoost + nightBoost + starfallBoost
+  void mode
+  return baseQuest + clueBoost + resourceBoost + biomeBoost + nightBoost
 }
 
 function chooseBestIndex(values: number[], difficulty: Difficulty, random: () => number) {
@@ -496,6 +471,10 @@ function draftSanctuaries(
   return { drawn, deck }
 }
 
+function roundNeedsMarketPick(state: MatchState) {
+  return state.round < state.maxRounds && state.market.length > 0
+}
+
 function maybeRefillMarket(state: MatchState) {
   if (state.round >= state.maxRounds) {
     return state
@@ -520,7 +499,7 @@ function closeRound(state: MatchState): MatchState {
   if (nextState.round >= nextState.maxRounds) {
     const finalStandings = nextState.players
       .map((player) => {
-        const result = scorePlayer(player, nextState.config.mode === 'starfall')
+        const result = scorePlayer(player)
         return {
           playerId: player.id,
           playerName: player.name,
@@ -543,7 +522,7 @@ function closeRound(state: MatchState): MatchState {
       revealEntries: [],
       draftOrder: [],
       draftIndex: 0,
-      draftStage: 'sanctuary',
+      draftStage: 'market',
       humanDraftSelection: {},
     }
 
@@ -560,7 +539,7 @@ function closeRound(state: MatchState): MatchState {
   nextState.revealEntries = []
   nextState.draftOrder = []
   nextState.draftIndex = 0
-  nextState.draftStage = 'sanctuary'
+  nextState.draftStage = 'market'
   nextState.humanDraftSelection = {}
   nextState.activeDigitEchoes = []
 
@@ -571,67 +550,34 @@ function applyDraftDecision(state: MatchState, playerId: string, selection: Draf
   const nextState = cloneState(state)
   const playerIndex = getPlayerIndex(nextState.players, playerId)
   const player = nextState.players[playerIndex]
+  let loggedState = nextState
 
-  if (nextState.draftStage === 'sanctuary') {
-    const choice = selection.sanctuaryId
-      ? player.pendingSanctuaries.find((card) => card.id === selection.sanctuaryId)
-      : undefined
-
-    if (choice) {
-      player.sanctuaries.push(choice)
-    }
-
-    if (player.pendingSanctuaries.length > 0) {
-      const rejected = player.pendingSanctuaries.filter((card) => card.id !== choice?.id)
-      nextState.discardedSanctuaries.push(...rejected)
-    }
-
-    player.pendingSanctuaries = []
-    nextState.draftIndex += 1
-    nextState.humanDraftSelection = {}
-
-    let loggedState = nextState
-    if (choice) {
-      loggedState = updateLog(nextState, `${player.name} beansprucht ${choice.title}.`)
-    }
-
-    if (loggedState.draftIndex >= loggedState.draftOrder.length) {
-      const transitioned = {
-        ...loggedState,
-        draftStage: 'market' as const,
-        draftIndex: 0,
-        humanDraftSelection: {},
-      }
-
-      if (transitioned.round >= transitioned.maxRounds || transitioned.market.length === 0) {
-        return closeRound(transitioned)
-      }
-
-      return updateScorePreviews(updateLog(transitioned, 'Alle Heiligtümer sind abgeschlossen. Der Markt öffnet jetzt.'))
-    }
-
-    return updateScorePreviews(loggedState)
-  }
-
-  if (selection.regionId) {
+  if (roundNeedsMarketPick(nextState) && selection.regionId) {
     const marketIndex = nextState.market.findIndex((card) => card.id === selection.regionId)
     if (marketIndex >= 0) {
       const [picked] = nextState.market.splice(marketIndex, 1)
       player.hand.push(picked)
+      loggedState = updateLog(nextState, `${player.name} nimmt ${picked.title} vom Markt auf die Hand.`)
     }
   }
 
-  nextState.draftIndex += 1
-  nextState.humanDraftSelection = {}
-
-  const pickedRegion = selection.regionId
-    ? nextState.players[playerIndex].hand.find((card) => card.id === selection.regionId)
+  const sanctuaryChoice = selection.sanctuaryId
+    ? player.pendingSanctuaries.find((card) => card.id === selection.sanctuaryId)
     : undefined
 
-  let loggedState = nextState
-  if (pickedRegion) {
-    loggedState = updateLog(nextState, `${player.name} zieht ${pickedRegion.title}.`)
+  if (sanctuaryChoice) {
+    player.sanctuaries.push(sanctuaryChoice)
+    loggedState = updateLog(loggedState, `${player.name} legt ${sanctuaryChoice.title} als Heiligtum aus.`)
   }
+
+  if (player.pendingSanctuaries.length > 0) {
+    const rejected = player.pendingSanctuaries.filter((card) => card.id !== sanctuaryChoice?.id)
+    nextState.discardedSanctuaries.push(...rejected)
+  }
+
+  player.pendingSanctuaries = []
+  nextState.draftIndex += 1
+  nextState.humanDraftSelection = {}
 
   if (loggedState.draftIndex >= loggedState.draftOrder.length) {
     return closeRound(loggedState)
@@ -736,7 +682,7 @@ export function createMatch(config: MatchConfig): MatchState {
     revealEntries: [],
     draftOrder: [],
     draftIndex: 0,
-    draftStage: 'sanctuary',
+    draftStage: 'market',
     activeHumanPlayerId: undefined,
     selectedRegionId: undefined,
     selectedRegionByPlayerId: {},
@@ -881,9 +827,9 @@ export function beginDraftPhase(state: MatchState): MatchState {
   next.phase = 'draft'
   next.draftIndex = 0
   next.humanDraftSelection = {}
-  next.draftStage = resolveDraftStage(next)
+  next.draftStage = 'market'
 
-  if (next.draftStage === 'market' && (next.round >= next.maxRounds || next.market.length === 0)) {
+  if (!roundNeedsMarketPick(next) && !next.players.some((player) => player.pendingSanctuaries.length > 0)) {
     return closeRound(next)
   }
 
@@ -949,12 +895,10 @@ export function confirmReveal(state: MatchState) {
 
   next.draftIndex = 0
   next.humanDraftSelection = {}
-  next.draftStage = resolveDraftStage(next)
+  next.draftStage = 'market'
   next.phase = 'draft'
   next.activeHumanPlayerId = undefined
-  next.activeDigitEchoes = Array.from(
-    new Set(next.players.flatMap((player) => player.tableau.filter((card) => card.meteor).map((card) => card.serial % 10))),
-  )
+  next.activeDigitEchoes = []
 
   let loggedState = updateLog(next, `Runde ${next.round} wird aufgedeckt. Die Draft-Reihenfolge steht.`)
   next.revealEntries.forEach((entry) => {
@@ -973,14 +917,10 @@ export function confirmReveal(state: MatchState) {
 export function setHumanDraftSelection(state: MatchState, selection: DraftSelection): MatchState {
   return {
     ...state,
-    humanDraftSelection:
-      state.draftStage === 'sanctuary'
-        ? selection.sanctuaryId
-          ? { sanctuaryId: selection.sanctuaryId }
-          : {}
-        : selection.regionId
-          ? { regionId: selection.regionId }
-          : {},
+    humanDraftSelection: {
+      ...state.humanDraftSelection,
+      ...selection,
+    },
   }
 }
 
@@ -991,8 +931,8 @@ export function confirmHumanDraft(state: MatchState) {
     return state
   }
 
-  const needsRegion = state.draftStage === 'market' && state.round < state.maxRounds && state.market.length > 0
-  const needsSanctuary = state.draftStage === 'sanctuary' && currentPlayer.pendingSanctuaries.length > 0
+  const needsRegion = roundNeedsMarketPick(state)
+  const needsSanctuary = currentPlayer.pendingSanctuaries.length > 0
   const { regionId, sanctuaryId } = state.humanDraftSelection
 
   if (needsRegion && !regionId) {
@@ -1006,7 +946,7 @@ export function confirmHumanDraft(state: MatchState) {
   return applyDraftDecision(
     state,
     activePlayerId,
-    state.draftStage === 'sanctuary' ? { sanctuaryId } : { regionId },
+    { regionId, sanctuaryId },
   )
 }
 
@@ -1021,9 +961,10 @@ export function runNextAiDraft(state: MatchState) {
   return applyDraftDecision(
     state,
     activePlayerId,
-    state.draftStage === 'sanctuary'
-      ? { sanctuaryId: aiChooseSanctuary(player, state) }
-      : { regionId: aiChooseDraftRegion(player, state) },
+    {
+      regionId: roundNeedsMarketPick(state) ? aiChooseDraftRegion(player, state) : undefined,
+      sanctuaryId: player.pendingSanctuaries.length > 0 ? aiChooseSanctuary(player, state) : undefined,
+    },
   )
 }
 
@@ -1083,8 +1024,8 @@ export function humanDraftCanConfirm(state: MatchState) {
     return false
   }
 
-  const needsRegion = state.draftStage === 'market' && state.round < state.maxRounds && state.market.length > 0
-  const needsSanctuary = state.draftStage === 'sanctuary' && human.pendingSanctuaries.length > 0
+  const needsRegion = roundNeedsMarketPick(state)
+  const needsSanctuary = human.pendingSanctuaries.length > 0
 
   if (needsRegion && !state.humanDraftSelection.regionId) {
     return false
@@ -1107,7 +1048,9 @@ export function bestScoreFromStandings(standings: FinalStanding[], playerName: s
 }
 
 export function getPlayerDigitEchoes(player: PlayerState, mode: MatchConfig['mode']) {
-  return playerVisibleEchoDigits(player, mode === 'starfall')
+  void player
+  void mode
+  return []
 }
 
 export function cloneMatchState(state: MatchState) {

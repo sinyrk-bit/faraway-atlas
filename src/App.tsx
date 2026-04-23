@@ -19,7 +19,6 @@ import {
   getActiveHumanPlayer,
   getCurrentPlayer,
   getHumanPlayer,
-  getPlayerDigitEchoes,
   humanDraftCanConfirm,
   runNextAiDraft,
   seedFromDate,
@@ -74,25 +73,24 @@ const phaseLabels: Record<MatchState['phase'], string> = {
   'opening-hand': 'Auftakthand',
   'choose-region': 'Routenwahl',
   reveal: 'Aufdecken',
-  draft: 'Marktphase',
+  draft: 'Erkundung beenden',
   scoring: 'Wertung',
   finished: 'Endstand',
 }
 
 const modeCinematicLine: Record<MatchMode, string> = {
   classic: 'Acht Runden. Eine makellose Route. Kein zweiter Versuch.',
-  advanced: 'Mehr Auftakt, mehr Druck, mehr Raum für präzise Perfektion.',
-  starfall: 'Meteore bleiben sichtbar und jede Endziffer kann das Endspiel kippen.',
+  advanced: 'Fünf Startkarten sehen, drei behalten, die Route bewusster aufbauen.',
 }
 
-const restartModeOrder: MatchMode[] = ['classic', 'advanced', 'starfall']
+const restartModeOrder: MatchMode[] = ['classic', 'advanced']
 
 function getPhaseLabel(match: MatchState) {
   if (match.phase !== 'draft') {
     return phaseLabels[match.phase]
   }
 
-  return match.draftStage === 'sanctuary' ? 'Heiligtumsphase' : 'Marktphase'
+  return 'Erkundung beenden'
 }
 
 function readInviteProfilePatch() {
@@ -110,7 +108,7 @@ function readInviteProfilePatch() {
   const seed = params.get('seed')
 
   return {
-    preferredMode: mode && ['classic', 'advanced', 'starfall'].includes(mode) ? (mode as MatchMode) : undefined,
+    preferredMode: mode && ['classic', 'advanced'].includes(mode) ? (mode as MatchMode) : undefined,
     preferredDifficulty:
       difficulty && ['wanderer', 'pathfinder', 'oracle'].includes(difficulty)
         ? (difficulty as Difficulty)
@@ -264,19 +262,19 @@ function RulesDrawer({ open }: { open: boolean }) {
     <aside className="rules-drawer">
       <div className="rules-block">
         <span>Kernablauf</span>
-        <p>Spiele pro Runde eine Region, decke gleichzeitig auf und drafte danach in aufsteigender Kartennummer aus dem Markt.</p>
+        <p>Eine Partie dauert genau 8 Runden. In jeder Runde erkundet ihr 1 Region, prüft Heiligtümer und beendet die Runde danach in aufsteigender Kartenzahl.</p>
       </div>
       <div className="rules-block">
         <span>Heiligtümer</span>
-        <p>Heiligtümer findest du nur dann, wenn deine neue Karte eine höhere Nummer als deine zuvor gespielte Region hat.</p>
+        <p>Ein Heiligtum findest du nur, wenn die Zahl deiner neuen Region größer ist als die deiner unmittelbar zuvor ausgespielten Region. Dann ziehst du 1 Heiligtum plus 1 weiteres pro Hinweis-Symbol in deiner Auslage.</p>
       </div>
       <div className="rules-block">
         <span>Wertung</span>
-        <p>Am Ende werten Regionenkarten von rechts nach links. Frühere Karten sehen nur bereits aufgedeckte Regionen plus alle Heiligtümer.</p>
+        <p>Am Spielende wertest du deine Regionen von rechts nach links. Für jede Region zählen nur die bis dahin aufgedeckten Regionen und immer alle Heiligtümer.</p>
       </div>
       <div className="rules-block">
-        <span>Sternensturz</span>
-        <p>Meteorkarten bleiben während der Wertung sichtbar und lassen auch alle Regionen mit derselben Endziffer aufleuchten.</p>
+        <span>Erkundung beenden</span>
+        <p>Wenn du am Zug bist, nimmst du zuerst 1 Region aus der Tischmitte auf die Hand. Hast du in dieser Runde Heiligtümer gezogen, legst du danach genau 1 davon offen aus.</p>
       </div>
     </aside>
   )
@@ -469,22 +467,16 @@ function buildPhaseAnnouncement(match: MatchState, activeName?: string): PhaseAn
         detail: 'Die Tischreihenfolge enthüllt sich jetzt über die Kartennummern.',
       }
     case 'draft':
-      return match.draftStage === 'sanctuary'
-        ? {
-            token: `draft-sanctuary-${match.round}-${match.draftIndex}`,
-            title: 'Phase 2 · Heiligtum',
-            detail: `${activeName ?? 'Der aktuelle Platz'} schließt jetzt die Heiligtumsphase ab.`,
-          }
-        : {
-            token: `draft-market-${match.round}-${match.draftIndex}`,
-            title: 'Phase 3 · Markt',
-            detail: `${activeName ?? 'Der aktuelle Platz'} zieht jetzt in Markt-Reihenfolge.`,
-          }
+      return {
+        token: `draft-${match.round}-${match.draftIndex}`,
+        title: 'Erkundung beenden',
+        detail: `${activeName ?? 'Der aktuelle Platz'} nimmt zuerst 1 Region aus dem Markt und legt danach ggf. 1 Heiligtum aus.`,
+      }
     case 'finished':
       return {
         token: `finished-${match.round}`,
         title: 'Atlas abgeschlossen',
-        detail: 'Rückwärtswertung, Heiligtümer und Meteorechos haben das Endspiel beschlossen.',
+        detail: 'Die Rückwärtswertung der Regionen und danach der Heiligtümer entscheidet die Partie.',
       }
     default:
       return {
@@ -650,10 +642,8 @@ function App() {
   const currentPlayer = match ? getCurrentPlayer(match) : undefined
   const standings = match ? buildFinalStandings(match) : []
   const viewedHuman = activeHuman ?? human
-  const humanEchoDigits = viewedHuman && match ? getPlayerDigitEchoes(viewedHuman, match.config.mode) : []
   const selectedHandCard = activeHuman?.hand.find((card) => card.id === match?.selectedRegionId)
   const humanDraftSelection = match?.humanDraftSelection ?? {}
-  const marketMiniLocked = Boolean(match && match.phase === 'draft' && match.draftStage === 'sanctuary')
   const dailySummary = standingsSummary(standings)
   const inspectedPlayer =
     match && inspectedPlayerId
@@ -662,17 +652,15 @@ function App() {
   const tacticalObjective = !match
     ? ''
     : match.phase === 'opening-hand'
-      ? 'Wähle eine perfekt skalierte Auftakthand und halte die Flex-Kurve offen.'
+      ? 'Wähle aus 5 Startregionen genau 3 für deine Anfangshand.'
       : match.phase === 'choose-region'
-        ? 'Spiele Nummern bewusst ansteigend, wenn du Heiligtümer freischalten willst.'
+        ? 'Spiele Zahlen bewusst ansteigend, wenn du Heiligtümer finden willst.'
         : match.phase === 'reveal'
-          ? 'Lies die Nummernreihenfolge, bevor der Markt aufspringt, und plane den Premium-Pick.'
+          ? 'Merke dir die Reihenfolge: kleinste Zahl beginnt beim Erkundung beenden.'
           : match.phase === 'draft'
-            ? match.draftStage === 'sanctuary'
-              ? 'Jetzt werden erst alle Heiligtümer sauber abgeschlossen, bevor der Markt startet.'
-              : 'Der Markt läuft jetzt streng in Reihenfolge der kleinsten gespielten Karte.'
+            ? 'Wenn du am Zug bist, nimm zuerst 1 Region aus dem Markt und lege danach ggf. 1 Heiligtum aus.'
             : match.phase === 'finished'
-              ? 'Analysiere die Rückwärtswertung und justiere die nächste Revanche.'
+              ? 'Prüfe die Rückwärtswertung und passe deine nächste Route an.'
               : ''
   const commandRailItems = !match
     ? []
@@ -680,7 +668,7 @@ function App() {
         { label: 'Aktiver Platz', value: activeHuman?.name ?? currentPlayer?.name ?? human?.name ?? 'Tisch bereit' },
         { label: 'Ziel', value: tacticalObjective },
         { label: 'Markt', value: `${match.market.length} offen` },
-        { label: 'Echo', value: humanEchoDigits.length > 0 ? humanEchoDigits.join(' · ') : 'Keine' },
+        { label: 'Heiligtümer', value: `${viewedHuman?.sanctuaries.length ?? 0} gesichert` },
       ]
 
   function patchProfile(patch: Partial<PersistedProfile>) {
@@ -820,39 +808,28 @@ function App() {
             <p className="eyebrow">Inoffizieller Neon-Prototyp</p>
             <h1>Faraway Atlas</h1>
             <p className="hero-text">
-              Eine kompakte Browser-Edition im dunklen Neon-Look mit Rückwärtswertung, Heiligtum-Ketten, mehreren Varianten und KI-Rivalen für direkte Live-Tests.
+              Eine kompakte Browser-Edition im Neon-Look, jetzt enger an den echten Faraway-Regeln: 8 Runden, 68 Regionen, 45 Heiligtümer, Markt in Zahlenreihenfolge und Rückwärtswertung.
             </p>
             <div className="hero-signal-row">
               <article className="hero-signal-card">
                 <span>Direktorat</span>
                 <strong>Atlas Command</strong>
-                <p>Hochverdichtete Tabletop-Inszenierung mit taktischer Neon-Praesenz.</p>
+                <p>Klare Karten, große Symbole und derselbe Lesefluss wie am echten Tisch.</p>
               </article>
               <article className="hero-signal-card">
                 <span>Tischsetup</span>
-                <strong>{profile.preferredTotalPlayers} Plaetze · {profile.preferredHumanCount} Mensch</strong>
+                <strong>{profile.preferredTotalPlayers} Plätze · {profile.preferredHumanCount} Mensch</strong>
                 <p>{modeCinematicLine[profile.preferredMode]}</p>
               </article>
               <article className="hero-signal-card">
                 <span>Freundesitz</span>
                 <strong>{profile.playerName || 'Erkunder'} online</strong>
-                <p>Invite-Link, Avatarwahl und kompakte Gegnerinspektion bereits aktiv.</p>
+                <p>Einladungslink, Avatarwahl und kompakte Gegnerinspektion bleiben direkt nutzbar.</p>
               </article>
             </div>
             <div className="hero-actions">
               <button className="primary-button" onClick={() => startMatch()} type="button">
                 Expedition starten
-              </button>
-              <button
-                className="ghost-button"
-                onClick={() => {
-                  playSound('tap')
-                  patchProfile({ preferredSeed: todaySeed })
-                  startMatch('starfall')
-                }}
-                type="button"
-              >
-                Tagesmodus Sternensturz
               </button>
               <button className="ghost-button" onClick={() => void copyInviteLink()} type="button">
                 Einladungslink kopieren
@@ -865,7 +842,7 @@ function App() {
             <div className="panel-section">
               <span className="panel-label">Spielmodi</span>
               <div className="mode-grid">
-                {(['classic', 'advanced', 'starfall'] as MatchMode[]).map((mode) => (
+                {(['classic', 'advanced'] as MatchMode[]).map((mode) => (
                   <ModeTile
                     active={profile.preferredMode === mode}
                     key={mode}
@@ -1010,7 +987,7 @@ function App() {
               <article className="feature-card">
                 <span>Premium HUD</span>
                 <strong>Command Rail</strong>
-                <p>Ziel, aktiver Platz, Marktfenster und Meteorechos bleiben sofort lesbar.</p>
+                <p>Ziel, aktiver Platz, Marktfenster und Reihenfolge bleiben sofort lesbar.</p>
               </article>
               <article className="feature-card">
                 <span>Match-Regie</span>
@@ -1225,14 +1202,12 @@ function App() {
   }
 
   function renderReveal(activeMatch: MatchState) {
-    const nextStageLabel = activeMatch.draftStage === 'sanctuary' ? 'Heiligtumsphase' : 'Marktphase'
-
     return (
       <section className="phase-panel phase-panel-reveal" key={`reveal-${activeMatch.round}`}>
         <div className="phase-copy">
           <span className="phase-tag">Aufdecken</span>
-          <h2>Der Tisch löst sich in Nummernreihenfolge auf.</h2>
-          <p>Kleine Nummern sind später zuerst am Markt. Heiligtümer werden vorher komplett abgehandelt und nur steigende Nummern öffnen sie.</p>
+          <h2>Der Tisch legt jetzt die Reihenfolge fürs Rundenende fest.</h2>
+          <p>Wer in dieser Runde die kleinste Zahl gespielt hat, ist beim Erkundung beenden zuerst am Zug. Dort nimmt man zuerst 1 Region aus dem Markt und legt danach ggf. 1 Heiligtum aus.</p>
         </div>
         <RevealSummary match={activeMatch} />
         <button
@@ -1243,7 +1218,7 @@ function App() {
           }}
           type="button"
         >
-          Weiter zur {nextStageLabel}
+          Weiter zum Erkundung beenden
         </button>
       </section>
     )
@@ -1255,7 +1230,6 @@ function App() {
       return null
     }
 
-    const isSanctuaryStage = activeMatch.draftStage === 'sanctuary'
     const isHumanTurn = currentPlayer?.kind === 'human'
     const selectedMarketCard = activeMatch.market.find((card) => card.id === humanDraftSelection.regionId)
     const selectedSanctuary = draftPlayer.pendingSanctuaries.find((card) => card.id === humanDraftSelection.sanctuaryId)
@@ -1264,66 +1238,44 @@ function App() {
     const draftLead = isHumanTurn
       ? `${draftPlayer.name} ist jetzt am Zug.`
       : `${currentPlayer?.name ?? draftPlayer.name} spielt diesen Schritt gerade aus.`
-    const draftCopy = isSanctuaryStage
-      ? 'Heiligtümer werden jetzt der Reihe nach abgeschlossen. Nur eine höhere Zahl als deine zuletzt gelegte Region öffnet diese Auswahl.'
-      : 'Jetzt wird in aufsteigender Zahlenreihenfolge aus dem Markt gezogen. Erst wenn alle fertig sind, geht die Runde weiter.'
-    const confirmLabel = isSanctuaryStage
-      ? needsSanctuary
-        ? 'Heiligtum bestätigen'
-        : 'Phase 2 abschließen'
+    const draftCopy =
+      'In dieser Reihenfolge ist jede Person genau einmal am Zug: zuerst 1 Region aus der Tischmitte nehmen, danach genau 1 gezogenes Heiligtum auslegen.'
+    const confirmLabel = 'Zug abschließen'
+    const statusTitle = selectedMarketCard
+      ? `Marktkarte bereit: ${selectedMarketCard.title}`
+      : selectedSanctuary
+        ? `Heiligtum bereit: ${selectedSanctuary.title}`
+        : needsRegion
+          ? 'Wähle jetzt 1 Region aus dem Markt.'
+          : needsSanctuary
+            ? 'Wähle jetzt 1 Heiligtum aus.'
+            : 'Für diesen Zug gibt es nichts mehr auszuwählen.'
+    const statusCopy = needsRegion && needsSanctuary
+      ? 'Zuerst Region nehmen, dann 1 Heiligtum aus den gezogenen Karten behalten.'
       : needsRegion
-        ? 'Markt bestätigen'
-        : 'Runde abschließen'
-    const statusTitle = isSanctuaryStage
-      ? needsSanctuary
-        ? selectedSanctuary
-          ? `Heiligtum bereit: ${selectedSanctuary.title}`
-          : 'Wähle jetzt ein Heiligtum.'
-        : 'Kein Heiligtum in dieser Runde.'
-      : needsRegion
-        ? selectedMarketCard
-          ? `Marktkarte bereit: ${selectedMarketCard.title}`
-          : 'Wähle jetzt eine Marktkarte.'
-        : 'Kein Marktpick in dieser Runde.'
-    const statusCopy = isSanctuaryStage
-      ? needsSanctuary
-        ? 'Phase 3 startet erst, wenn jeder Platz Phase 2 abgeschlossen hat.'
-        : 'Dieser Platz hat in Phase 2 nichts offen. Danach geht es für alle gesammelt in Phase 3.'
-      : needsRegion
-        ? 'Die Reihenfolge bleibt bis zum Ende der Marktphase strikt erhalten.'
-        : 'Nach dieser Bestätigung wird die Runde direkt abgeschlossen.'
+        ? 'In der letzten Runde entfällt dieser Schritt, sonst nimmst du hier 1 Region auf die Hand.'
+        : needsSanctuary
+          ? 'Von allen gezogenen Heiligtümern wird genau 1 ausgelegt, der Rest wandert zurück unter den Stapel.'
+          : 'Sobald alle ihren Zug beendet haben, startet die nächste Runde oder die Wertung.'
 
     return (
       <section
         className="phase-panel phase-draft"
-        key={`draft-${activeMatch.round}-${activeMatch.draftStage}-${currentPlayer?.id ?? 'none'}-${activeMatch.draftIndex}`}
+        key={`draft-${activeMatch.round}-${currentPlayer?.id ?? 'none'}-${activeMatch.draftIndex}`}
       >
         <div className="phase-copy draft-phase-copy">
           <div className="draft-phase-meta">
-            <span className="phase-tag">{isSanctuaryStage ? 'Phase 2 / Heiligtum' : 'Phase 3 / Markt'}</span>
+            <span className="phase-tag">Erkundung beenden</span>
             <span className="draft-turn-pill">{draftLead}</span>
           </div>
           <p>{draftCopy}</p>
         </div>
 
-        <div className="draft-sequence">
-          {[
-            { step: '1', label: 'Karte ablegen', state: 'done' },
-            { step: '2', label: 'Heiligtum', state: isSanctuaryStage ? 'active' : 'done' },
-            { step: '3', label: 'Markt', state: isSanctuaryStage ? 'pending' : 'active' },
-          ].map((entry) => (
-            <div className={`draft-sequence-step is-${entry.state}`} key={entry.step}>
-              <span className="draft-sequence-step-index">{entry.step}</span>
-              <strong>{entry.label}</strong>
-            </div>
-          ))}
-        </div>
-
-        <section className={`draft-stage-shell is-${activeMatch.draftStage}`}>
+        <section className="draft-stage-shell is-market">
           <div className="draft-stage-header">
             <div>
-              <span>{isSanctuaryStage ? 'Phase 2' : 'Phase 3'}</span>
-              <strong>{isSanctuaryStage ? 'Heiligtum nehmen' : 'Markt ziehen'}</strong>
+              <span>Rundenende</span>
+              <strong>Markt und Heiligtum</strong>
             </div>
             <div className="draft-stage-progress">
               <span>Reihenfolge</span>
@@ -1334,29 +1286,52 @@ function App() {
           </div>
 
           <p className="draft-stage-copy">
-            {isSanctuaryStage
-              ? needsSanctuary
-                ? `${draftPlayer.name} darf jetzt genau ein Heiligtum sichern.`
-                : `${draftPlayer.name} hat in dieser Runde kein Heiligtum und gibt die Phase direkt frei.`
+            {needsRegion && needsSanctuary
+              ? `${draftPlayer.name} nimmt jetzt 1 Region aus dem Markt und legt danach 1 Heiligtum aus.`
               : needsRegion
-                ? `${draftPlayer.name} ist jetzt mit dem Marktpick dran.`
-                : 'In dieser Runde gibt es keinen Marktpick mehr.'}
+                ? `${draftPlayer.name} nimmt jetzt 1 Region aus dem Markt auf die Hand.`
+                : needsSanctuary
+                  ? `${draftPlayer.name} legt jetzt genau 1 Heiligtum aus.`
+                  : `${draftPlayer.name} beendet jetzt den Zug ohne Auswahl.`}
           </p>
 
-          <div
-            className={`card-grid compact-grid draft-focus-grid ${isSanctuaryStage ? 'is-sanctuary' : 'is-market'} ${
-              isSanctuaryStage && draftPlayer.pendingSanctuaries.length === 1 ? 'has-single-card' : ''
-            }`}
-          >
-            {isSanctuaryStage && draftPlayer.pendingSanctuaries.length === 0 ? (
-              <div className="strip-empty">Hier gibt es in Phase 2 nichts auszuwählen.</div>
-            ) : null}
-            {!isSanctuaryStage && activeMatch.market.length === 0 ? (
-              <div className="strip-empty">In Phase 3 gibt es in dieser Runde keinen Marktdraft.</div>
-            ) : null}
+          {needsRegion ? (
+            <>
+              <div className="strip-heading">
+                <span>1. Region aus dem Markt nehmen</span>
+                <strong>{activeMatch.round === activeMatch.maxRounds ? 'In Runde 8 entfällt dieser Schritt.' : `${activeMatch.market.length} Karten liegen offen.`}</strong>
+              </div>
+              <div className="card-grid compact-grid draft-focus-grid is-market">
+                {activeMatch.market.map((card) => (
+                  <CardFace
+                    card={card}
+                    compact
+                    key={card.id}
+                    onClick={
+                      isHumanTurn
+                        ? () => {
+                            playSound('select')
+                            updateHumanDraft({ regionId: card.id })
+                          }
+                        : undefined
+                    }
+                    selectable={Boolean(isHumanTurn && needsRegion)}
+                    selected={humanDraftSelection.regionId === card.id}
+                    dimmed={Boolean(isHumanTurn && humanDraftSelection.regionId && humanDraftSelection.regionId !== card.id)}
+                  />
+                ))}
+              </div>
+            </>
+          ) : null}
 
-            {isSanctuaryStage
-              ? draftPlayer.pendingSanctuaries.map((card) => (
+          {needsSanctuary ? (
+            <>
+              <div className="strip-heading">
+                <span>2. 1 Heiligtum auslegen</span>
+                <strong>{draftPlayer.pendingSanctuaries.length} Heiligtum{draftPlayer.pendingSanctuaries.length === 1 ? '' : 'e'} zur Auswahl.</strong>
+              </div>
+              <div className={`card-grid compact-grid draft-focus-grid is-sanctuary ${draftPlayer.pendingSanctuaries.length === 1 ? 'has-single-card' : ''}`}>
+                {draftPlayer.pendingSanctuaries.map((card) => (
                   <CardFace
                     card={card}
                     compact
@@ -1373,31 +1348,15 @@ function App() {
                     selected={humanDraftSelection.sanctuaryId === card.id}
                     dimmed={Boolean(isHumanTurn && humanDraftSelection.sanctuaryId && humanDraftSelection.sanctuaryId !== card.id)}
                   />
-                ))
-              : activeMatch.market.map((card) => (
-                  <CardFace
-                    card={card}
-                    compact
-                    key={card.id}
-                    onClick={
-                      isHumanTurn && needsRegion
-                        ? () => {
-                            playSound('select')
-                            updateHumanDraft({ regionId: card.id })
-                          }
-                        : undefined
-                    }
-                    selectable={Boolean(isHumanTurn && needsRegion)}
-                    selected={humanDraftSelection.regionId === card.id}
-                    dimmed={Boolean(isHumanTurn && humanDraftSelection.regionId && humanDraftSelection.regionId !== card.id)}
-                  />
                 ))}
-          </div>
+              </div>
+            </>
+          ) : null}
         </section>
 
         <div className="draft-action-bar">
           <div className="draft-selection-status">
-            <span>{isSanctuaryStage ? 'Phase 2 Status' : 'Phase 3 Status'}</span>
+            <span>Zugstatus</span>
             <strong>{statusTitle}</strong>
             <p>{statusCopy}</p>
           </div>
@@ -1416,7 +1375,7 @@ function App() {
             </button>
           ) : (
             <div className="waiting-chip draft-waiting-chip">
-              Warte auf {currentPlayer?.name} in {isSanctuaryStage ? 'Phase 2' : 'Phase 3'} ...
+              Warte auf {currentPlayer?.name} beim Erkundung beenden ...
             </div>
           )}
         </div>
@@ -1578,14 +1537,12 @@ function App() {
               {match.market.length === 0 ? <p>Der Markt ist aktuell leer.</p> : null}
               {match.market.map((card) => (
                 <button
-                  className={`market-mini ${marketMiniLocked ? 'is-locked' : ''}`}
-                  disabled={marketMiniLocked}
+                  className="market-mini"
                   key={card.id}
                   onClick={() => {
                     if (
                       match.phase === 'draft' &&
-                      currentPlayer?.kind === 'human' &&
-                      !marketMiniLocked
+                      currentPlayer?.kind === 'human'
                     ) {
                       playSound('select')
                       updateHumanDraft({ regionId: card.id })
@@ -1608,24 +1565,12 @@ function App() {
               ))}
             </div>
           </div>
-
-          <div className="side-section side-section-echo">
-            <span>{viewedHuman ? `Echo-Ziffern von ${viewedHuman.name}` : 'Echo-Ziffern'}</span>
-            <div className="digit-row">
-              {humanEchoDigits.length === 0 ? <p>Noch keine Meteorechos.</p> : null}
-              {humanEchoDigits.map((digit) => (
-                <span className="digit-chip" key={digit}>
-                  {digit}
-                </span>
-              ))}
-            </div>
-          </div>
         </aside>
       </section>
 
       {inspectedPlayer ? (
         <PlayerInspectModal
-          echoDigits={getPlayerDigitEchoes(inspectedPlayer, match.config.mode)}
+          echoDigits={[]}
           mode={match.config.mode}
           onClose={() => setInspectedPlayerId(null)}
           player={inspectedPlayer}

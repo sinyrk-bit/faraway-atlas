@@ -45,8 +45,8 @@ const biomeSigils: Record<Biome, string> = {
 const iconMeta = {
   uddu: { glyph: 'UD', accent: resourceMeta.uddu.accent, label: 'Uddu', iconKey: 'uddu' as const },
   okiko: { glyph: 'OK', accent: resourceMeta.okiko.accent, label: 'Okiko', iconKey: 'okiko' as const },
-  goldlog: { glyph: 'GL', accent: resourceMeta.goldlog.accent, label: 'Goldlog', iconKey: 'goldlog' as const },
-  clue: { glyph: 'CL', accent: '#9eeaff', label: 'Spur', iconKey: 'clue' as const },
+  goldlog: { glyph: 'TD', accent: resourceMeta.goldlog.accent, label: 'Distel', iconKey: 'goldlog' as const },
+  clue: { glyph: 'HI', accent: '#9eeaff', label: 'Hinweis', iconKey: 'clue' as const },
   night: { glyph: 'NT', accent: '#93a2ff', label: 'Nacht', iconKey: 'night' as const },
   sanctuary: { glyph: 'RF', accent: '#ffd78d', label: 'Heiligtum', iconKey: 'sanctuary' as const },
   digit: { glyph: '0-9', accent: '#ffd85f', label: 'Endziffer' },

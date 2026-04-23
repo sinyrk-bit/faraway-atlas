@@ -8,7 +8,7 @@ export type TimeOfDay = 'day' | 'night'
 
 export type Difficulty = 'wanderer' | 'pathfinder' | 'oracle'
 
-export type MatchMode = 'classic' | 'advanced' | 'starfall'
+export type MatchMode = 'classic' | 'advanced'
 
 export type CardRarity = 'common' | 'rare' | 'mythic'
 

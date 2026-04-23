@@ -28,6 +28,7 @@ function totals(player: PlayerState) {
 }
 
 export function PlayerInspectModal({ player, mode, echoDigits, onClose }: PlayerInspectModalProps) {
+  void echoDigits
   const avatar = getAvatarForPlayer(player.id, player.avatarId)
   const resourceTotals = totals(player)
 
@@ -48,7 +49,7 @@ export function PlayerInspectModal({ player, mode, echoDigits, onClose }: Player
             <div>
               <span className="player-role">{player.kind === 'human' ? 'Platz' : 'Rivale'}</span>
               <h2>{player.name}</h2>
-              <p>{mode === 'starfall' ? 'Sternensturz-Wertung aktiv.' : 'Standardwertung aktiv.'}</p>
+              <p>{mode === 'advanced' ? 'Erweiterter Auftakt aktiv.' : 'Grundspiel-Wertung aktiv.'}</p>
             </div>
           </div>
 
@@ -68,18 +69,6 @@ export function PlayerInspectModal({ player, mode, echoDigits, onClose }: Player
         </header>
 
         <div className="player-inspect-meta">
-          <div className="player-inspect-chipline">
-            <span className="strip-heading">Echo-Ziffern</span>
-            <div className="digit-row">
-              {echoDigits.length === 0 ? <p>Keine aktiven Meteorechos.</p> : null}
-              {echoDigits.map((digit) => (
-                <span className="digit-chip" key={`${player.id}-digit-${digit}`}>
-                  {digit}
-                </span>
-              ))}
-            </div>
-          </div>
-
           <div className="player-inspect-chipline">
             <span className="strip-heading">Biomfokus</span>
             <div className="player-inspect-badges">
@@ -109,7 +98,6 @@ export function PlayerInspectModal({ player, mode, echoDigits, onClose }: Player
               <CardFace
                 card={card}
                 compact
-                echoing={echoDigits.includes(card.serial % 10)}
                 key={card.id}
               />
             ))}

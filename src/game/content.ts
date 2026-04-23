@@ -14,16 +14,16 @@ const BIOMES: Biome[] = ['river', 'city', 'forest', 'desert']
 const RESOURCES: ResourceType[] = ['uddu', 'okiko', 'goldlog']
 
 const biomeNames: Record<Biome, { label: string; short: string; accent: string }> = {
-  river: { label: 'Neonkanal', short: 'Kanal', accent: '#36f3ff' },
-  city: { label: 'Versunkene Stadt', short: 'Stadt', accent: '#ff8bff' },
-  forest: { label: 'Pilzwald', short: 'Wald', accent: '#8dff72' },
-  desert: { label: 'Steinwüste', short: 'Wüste', accent: '#ffd85f' },
+  river: { label: 'Fluss', short: 'Fluss', accent: '#36f3ff' },
+  city: { label: 'Stadt', short: 'Stadt', accent: '#ff8bff' },
+  forest: { label: 'Wald', short: 'Wald', accent: '#8dff72' },
+  desert: { label: 'Wüste', short: 'Wüste', accent: '#ffd85f' },
 }
 
 const resourceNames: Record<ResourceType, { label: string; accent: string; glyph: string }> = {
   uddu: { label: 'Uddu-Stein', accent: '#7bc6ff', glyph: 'UD' },
   okiko: { label: 'Okiko-Chimäre', accent: '#ff66cf', glyph: 'OK' },
-  goldlog: { label: 'Goldlog-Distel', accent: '#ffe272', glyph: 'GL' },
+  goldlog: { label: 'Taukronen-Distel', accent: '#75ff8a', glyph: 'TD' },
 }
 
 export const biomeMeta = biomeNames
@@ -44,12 +44,6 @@ export const modeMeta: Record<
     summary: 'Ziehe fünf Startregionen und behalte nur drei.',
     accent: '#ff4fd8',
     detail: 'Mehr Tiefe im Start, stärkere Synergien und präzisere Routenplanung.',
-  },
-  starfall: {
-    title: 'Sternensturz',
-    summary: 'Meteorregionen bleiben sichtbar und gleiche Endziffern glühen nach.',
-    accent: '#ffe45e',
-    detail: 'Ein Erweiterungsmodus mit Meteorkarten, Tempovorteilen und zusätzlichen Ziffernsynergien.',
   },
 }
 
@@ -166,10 +160,6 @@ function nextBiome(biome: Biome): Biome {
   return BIOMES[(BIOMES.indexOf(biome) + 1) % BIOMES.length]
 }
 
-function oppositeBiome(biome: Biome): Biome {
-  return BIOMES[(BIOMES.indexOf(biome) + 2) % BIOMES.length]
-}
-
 function buildRegionTitle(serial: number, biome: Biome): { title: string; subtitle: string } {
   const adjective = adjectives[(serial * 3) % adjectives.length]
   const noun = biomeNouns[biome][serial % biomeNouns[biome].length]
@@ -179,39 +169,64 @@ function buildRegionTitle(serial: number, biome: Biome): { title: string; subtit
   }
 }
 
-function buildQuest(serial: number, biome: Biome, meteor: boolean): Quest {
-  const p = serial % 12
+function buildQuest(serial: number, biome: Biome): Quest {
+  const p = serial % 9
   const adjacent = nextBiome(biome)
-  const opposite = oppositeBiome(biome)
+  const condition = serial % 4 === 0
+    ? {
+        type: 'resource' as const,
+        resource: 'uddu' as const,
+        count: 1,
+        label: 'Benötigt mindestens 1 Uddu-Stein.',
+      }
+    : serial % 5 === 0
+      ? {
+          type: 'resource' as const,
+          resource: 'okiko' as const,
+          count: 1,
+          label: 'Benötigt mindestens 1 Okiko-Chimäre.',
+        }
+      : serial % 7 === 0
+        ? {
+            type: 'resource' as const,
+            resource: 'goldlog' as const,
+            count: 1,
+            label: 'Benötigt mindestens 1 Taukronen-Distel.',
+          }
+        : undefined
 
   switch (p) {
     case 0:
       return {
         type: 'per-resource',
-        label: '2 Ruhm für jeden sichtbaren Uddu-Stein.',
-        points: 2,
-        resource: 'uddu',
+        label: '1 Ruhm für jedes Hinweis-Symbol.',
+        points: 1,
+        resource: 'clue',
+        prerequisite: condition,
       }
     case 1:
       return {
         type: 'per-resource',
-        label: '3 Ruhm für jede sichtbare Okiko-Chimäre.',
-        points: 3,
-        resource: 'okiko',
+        label: '2 Ruhm für jedes Uddu-Stein-Symbol.',
+        points: 2,
+        resource: 'uddu',
+        prerequisite: condition,
       }
     case 2:
       return {
         type: 'per-resource',
-        label: '4 Ruhm für jede sichtbare Goldlog-Distel.',
+        label: '4 Ruhm für jedes Okiko-Chimären-Symbol.',
         points: 4,
-        resource: 'goldlog',
+        resource: 'okiko',
+        prerequisite: condition,
       }
     case 3:
       return {
-        type: 'per-biome',
-        label: `4 Ruhm für jede ${biomeNames[biome].short}-Karte.`,
-        points: 4,
-        biomes: [biome],
+        type: 'per-resource',
+        label: '3 Ruhm für jedes Taukronen-Distel-Symbol.',
+        points: 3,
+        resource: 'goldlog',
+        prerequisite: condition,
       }
     case 4:
       return {
@@ -219,141 +234,78 @@ function buildQuest(serial: number, biome: Biome, meteor: boolean): Quest {
         label: `2 Ruhm für jede ${biomeNames[biome].short}- und ${biomeNames[adjacent].short}-Karte.`,
         points: 2,
         biomes: [biome, adjacent],
-        prerequisite: {
-          type: 'resource',
-          resource: 'uddu',
-          count: 1,
-          label: 'Benötigt mindestens 1 Uddu-Stein.',
-        },
+        prerequisite: condition,
       }
     case 5:
       return {
-        type: 'set',
-        label: '10 Ruhm für jedes Set aus 4 verschiedenen Biomen.',
-        points: 10,
+        type: 'per-biome',
+        label: `4 Ruhm für jede ${biomeNames.forest.short}-Karte.`,
+        points: 4,
+        biomes: ['forest'],
+        prerequisite: condition,
       }
     case 6:
       return {
-        type: 'per-night',
-        label: '4 Ruhm für jede Nachtkarte.',
-        points: 4,
-        prerequisite: {
-          type: 'clues',
-          count: 2,
-          label: 'Benötigt mindestens 2 Spuren.',
-        },
+        type: 'set',
+        label: '10 Ruhm für jedes Set aus vier verschiedenen Landschaftsarten.',
+        points: 10,
+        prerequisite: condition,
       }
     case 7:
       return {
-        type: 'flat',
-        label: '12 Ruhm, wenn du von jedem Wunder mindestens eins besitzt.',
-        points: 12,
-        prerequisite: {
-          type: 'resources',
-          resources: [
-            { resource: 'uddu', count: 1 },
-            { resource: 'okiko', count: 1 },
-            { resource: 'goldlog', count: 1 },
-          ],
-          label: 'Benötigt 1 Uddu, 1 Okiko und 1 Goldlog.',
-        },
-      }
-    case 8:
-      return {
-        type: 'per-biome',
-        label: `3 Ruhm für jede ${biomeNames[opposite].short}-Karte.`,
-        points: 3,
-        biomes: [opposite],
-        prerequisite: {
-          type: 'night',
-          count: 2,
-          label: 'Benötigt mindestens 2 Nachtkarten.',
-        },
-      }
-    case 9:
-      return {
-        type: 'per-sanctuary',
-        label: '5 Ruhm für jedes Heiligtum.',
-        points: 5,
-        prerequisite: {
-          type: 'resource',
-          resource: 'goldlog',
-          count: 1,
-          label: 'Benötigt mindestens 1 Goldlog-Distel.',
-        },
-      }
-    case 10:
-      return {
-        type: 'per-digit-match',
-        label: '3 Ruhm für jede sichtbare Region mit derselben Endziffer.',
-        points: meteor ? 4 : 3,
-        prerequisite: {
-          type: 'clues',
-          count: 1,
-          label: 'Benötigt mindestens 1 Spur.',
-        },
+        type: 'per-night',
+        label: '4 Ruhm für jede Nacht-Karte.',
+        points: 4,
+        prerequisite: condition,
       }
     default:
       return {
         type: 'flat',
-        label: '14 Ruhm, wenn du mindestens 2 Heiligtümer besitzt.',
-        points: meteor ? 16 : 14,
-        prerequisite: {
-          type: 'sanctuary',
-          count: 2,
-          label: 'Benötigt mindestens 2 Heiligtümer.',
-        },
+        label: '19 Ruhm als festgelegter Wert.',
+        points: 19,
+        prerequisite: condition,
       }
   }
 }
 
 function buildResources(serial: number, biome: Biome, meteor: boolean): ResourceMap {
+  void biome
+  void meteor
   const resources = zeroResources()
-  const majorMap: Record<Biome, ResourceType> = {
-    river: 'okiko',
-    city: 'uddu',
-    forest: 'goldlog',
-    desert: 'uddu',
-  }
-  const major = majorMap[biome]
-  const secondary = RESOURCES[(RESOURCES.indexOf(major) + 1) % RESOURCES.length]
-  const rare = RESOURCES[(RESOURCES.indexOf(major) + 2) % RESOURCES.length]
 
   if (serial % 2 === 0) {
-    resources[major] += 1
+    resources.uddu += 1
   }
-  if (serial % 7 === 0 || (meteor && serial % 3 === 0)) {
-    resources[secondary] += 1
+  if (serial % 5 === 0 || serial % 13 === 0) {
+    resources.okiko += 1
   }
-  if (serial % 17 === 0 || (meteor && serial % 11 === 0)) {
-    resources[rare] += 1
+  if (serial % 11 === 0 || serial % 29 === 0) {
+    resources.goldlog += 1
   }
 
   return resources
 }
 
-function buildRegionCard(serial: number, meteor = false): RegionCard {
-  const biome = BIOMES[(serial + (meteor ? 1 : 0)) % BIOMES.length]
+function buildRegionCard(serial: number): RegionCard {
+  const biome = BIOMES[serial % BIOMES.length]
   const { title, subtitle } = buildRegionTitle(serial, biome)
-  const time: TimeOfDay = serial % (meteor ? 2 : 3) === 0 ? 'night' : 'day'
-  const clues = meteor ? (serial % 4 === 0 ? 2 : 1) : serial % 9 === 0 ? 2 : serial % 4 === 0 ? 1 : 0
+  const time: TimeOfDay = serial % 3 === 0 ? 'night' : 'day'
+  const clues = serial % 9 === 0 ? 2 : serial % 4 === 0 ? 1 : 0
 
   return {
-    id: `${meteor ? 'meteor' : 'region'}-${serial}`,
+    id: `region-${serial}`,
     cardType: 'region',
     serial,
     title,
     subtitle,
-    flavor: meteor
-      ? 'Ein Meteor reißt den Himmel auf und lässt verborgene Routen elektrisch nachglühen.'
-      : 'Die Bewohner erinnern sich an jeden Pfad anders, als er ursprünglich begangen wurde.',
+    flavor: 'Die Bewohner erinnern sich an jeden Pfad anders, als er ursprünglich begangen wurde.',
     biome,
     time,
     clues,
-    resources: buildResources(serial, biome, meteor),
-    quest: buildQuest(serial, biome, meteor),
-    rarity: meteor ? 'mythic' : serial % 11 === 0 ? 'rare' : 'common',
-    meteor,
+    resources: buildResources(serial, biome, false),
+    quest: buildQuest(serial, biome),
+    rarity: serial % 11 === 0 ? 'rare' : 'common',
+    meteor: false,
   }
 }
 
@@ -363,7 +315,7 @@ function buildSanctuaryQuest(index: number, linkedBiome?: Biome): Quest | undefi
     case 0:
       return {
         type: 'per-resource',
-        label: '1 Ruhm für jede sichtbare Spur.',
+        label: '1 Ruhm für jedes Hinweis-Symbol.',
         points: 1,
         resource: 'clue',
       }
@@ -375,9 +327,10 @@ function buildSanctuaryQuest(index: number, linkedBiome?: Biome): Quest | undefi
       }
     case 2:
       return {
-        type: 'per-sanctuary',
-        label: '4 Ruhm für jedes Heiligtum.',
-        points: 4,
+        type: 'per-resource',
+        label: '3 Ruhm für jedes Taukronen-Distel-Symbol.',
+        points: 3,
+        resource: 'goldlog',
       }
     case 3:
       if (!linkedBiome) {
@@ -392,12 +345,12 @@ function buildSanctuaryQuest(index: number, linkedBiome?: Biome): Quest | undefi
     case 4:
       return {
         type: 'flat',
-        label: '8 Ruhm, wenn du mindestens 2 Spuren besitzt.',
+        label: '8 Ruhm, wenn du mindestens 2 Hinweise besitzt.',
         points: 8,
         prerequisite: {
           type: 'clues',
           count: 2,
-          label: 'Benötigt mindestens 2 Spuren.',
+          label: 'Benötigt mindestens 2 Hinweise.',
         },
       }
     default:
@@ -427,13 +380,8 @@ function buildSanctuaryCard(index: number): SanctuaryCard {
 }
 
 export function buildRegionDeck(mode: MatchMode): RegionCard[] {
-  const base = Array.from({ length: 68 }, (_, index) => buildRegionCard(index + 1))
-  if (mode !== 'starfall') {
-    return base
-  }
-
-  const meteors = Array.from({ length: 15 }, (_, index) => buildRegionCard(69 + index, true))
-  return [...base, ...meteors]
+  void mode
+  return Array.from({ length: 68 }, (_, index) => buildRegionCard(index + 1))
 }
 
 export function buildSanctuaryDeck(): SanctuaryCard[] {
