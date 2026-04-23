@@ -397,41 +397,32 @@ export function CardFace({
               <img alt="" className="card-art-stat-symbol" src={meteorIcon} />
             </span>
           ) : null}
+          <div className="card-art-symbol-overlay" aria-label={card.title}>
+            {quest ? (
+              <div className="card-art-symbol-cluster is-score" title="Punkte">
+                <span className="card-score-badge">+{questPoints}</span>
+                {questItems.map((item) => (
+                  <SymbolChip compact item={item} key={`${card.id}-quest-${item.key}`} />
+                ))}
+              </div>
+            ) : null}
+            {prerequisiteItems.length > 0 ? (
+              <div className="card-art-symbol-cluster is-need" title="Benoetigt">
+                {prerequisiteItems.map((item) => (
+                  <SymbolChip compact item={item} key={`${card.id}-need-${item.key}`} />
+                ))}
+              </div>
+            ) : null}
+            {counters.length > 0 ? (
+              <div className="card-art-symbol-cluster is-gain" title="Gibt">
+                {counters.map((item) => (
+                  <SymbolChip compact item={item} key={`${card.id}-counter-${item.key}`} />
+                ))}
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
-
-      <section className="card-info-panel card-symbol-only-panel" aria-label={card.title}>
-        <div className="card-symbol-board">
-          <div className="card-symbol-main">
-            <span className="card-score-badge">+{questPoints}</span>
-            <div className="card-score-track" title="Punkte">
-              {questItems.length > 0 ? (
-                questItems.map((item) => <SymbolChip compact item={item} key={`${card.id}-quest-${item.key}`} />)
-              ) : (
-                <span className="card-symbol-empty">+</span>
-              )}
-            </div>
-          </div>
-          <div className="card-symbol-row is-need" title="Benoetigt">
-            <div className="card-score-track">
-              {prerequisiteItems.length > 0 ? (
-                prerequisiteItems.map((item) => <SymbolChip compact item={item} key={`${card.id}-need-${item.key}`} />)
-              ) : (
-                <span className="card-symbol-empty">0</span>
-              )}
-            </div>
-          </div>
-          <div className="card-symbol-row is-gain" title="Gibt">
-            <div className="card-score-track">
-              {counters.length > 0 ? (
-                counters.map((item) => <SymbolChip compact item={item} key={`${card.id}-counter-${item.key}`} />)
-              ) : (
-                <span className="card-symbol-empty">0</span>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
     </button>
   )
 }
