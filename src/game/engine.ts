@@ -488,15 +488,6 @@ function effectiveDraftMetric(card: RegionCard) {
   return card.serial
 }
 
-function shouldFindSanctuary(player: PlayerState, playedCard: RegionCard) {
-  const previous = player.tableau.at(-2)
-  if (!previous) {
-    return false
-  }
-
-  return playedCard.serial > previous.serial
-}
-
 function draftSanctuaries(
   sanctuaryDeck: SanctuaryCard[],
   count: number,
@@ -905,7 +896,7 @@ export function confirmReveal(state: MatchState) {
   }
 
   const next = cloneState(state)
-  const reveals: Array<{ playerId: string; card: RegionCard }> = []
+  const reveals: Array<{ playerId: string; card: RegionCard; foundSanctuary: boolean }> = []
 
   next.players.forEach((player) => {
     const chosenId =
@@ -917,14 +908,15 @@ export function confirmReveal(state: MatchState) {
     }
     const handIndex = player.hand.findIndex((card) => card.id === chosenId)
     const [played] = player.hand.splice(handIndex, 1)
-    reveals.push({ playerId: player.id, card: played })
+    const previousCard = player.tableau.at(-1)
+    const foundSanctuary = previousCard ? played.serial > previousCard.serial : false
+    reveals.push({ playerId: player.id, card: played, foundSanctuary })
     player.tableau.push(played)
   })
 
-  reveals.forEach(({ playerId, card }) => {
+  reveals.forEach(({ playerId, card, foundSanctuary }) => {
     const playerIndex = getPlayerIndex(next.players, playerId)
     const player = next.players[playerIndex]
-    const foundSanctuary = shouldFindSanctuary(player, card)
     let sanctuaryCount = 0
 
     if (foundSanctuary) {

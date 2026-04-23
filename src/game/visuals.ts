@@ -57,6 +57,12 @@ const artPools = {
   sanctuary: [sanctuaryArt, sanctuaryArt2, sanctuaryArt3],
 } as const
 
+const generatedCardArt = import.meta.glob('../assets/card-art/generated/*.svg', {
+  eager: true,
+  import: 'default',
+  query: '?url',
+}) as Record<string, string>
+
 function hashString(value: string) {
   let hash = 2166136261
 
@@ -89,6 +95,11 @@ export function getAvatarById(avatarId?: string) {
 }
 
 export function getCardArt(card: PlayCard) {
+  const generated = generatedCardArt[`../assets/card-art/generated/${card.id}.svg`]
+  if (generated) {
+    return generated
+  }
+
   if (card.cardType === 'sanctuary') {
     const sanctuarySeed = buildCardVisualSeed(card)
     return pickVariant(artPools.sanctuary, sanctuarySeed)

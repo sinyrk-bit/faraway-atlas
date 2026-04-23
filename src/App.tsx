@@ -1261,12 +1261,12 @@ function App() {
     const selectedSanctuary = draftPlayer.pendingSanctuaries.find((card) => card.id === humanDraftSelection.sanctuaryId)
     const needsRegion = activeMatch.round < activeMatch.maxRounds && activeMatch.market.length > 0
     const needsSanctuary = draftPlayer.pendingSanctuaries.length > 0
-    const draftHeadline = isHumanTurn
-      ? `${draftPlayer.name}, du schliesst jetzt ${isSanctuaryStage ? 'Phase 2' : 'Phase 3'} ab.`
-      : `${currentPlayer?.name ?? draftPlayer.name} bearbeitet gerade ${isSanctuaryStage ? 'Phase 2' : 'Phase 3'}.`
+    const draftLead = isHumanTurn
+      ? `${draftPlayer.name} ist jetzt am Zug.`
+      : `${currentPlayer?.name ?? draftPlayer.name} spielt diesen Schritt gerade aus.`
     const draftCopy = isSanctuaryStage
-      ? 'Erst werden alle Refugien fuer die Runde komplett abgehandelt. Nur wer hoeher als die vorherige Karte gelegt hat, bekommt hier Optionen.'
-      : 'Jetzt wird der Markt gezogen. Die kleinste gespielte Karte beginnt, und die Runde geht erst weiter, wenn alle ihren Marktzug beendet haben.'
+      ? 'Refugien werden jetzt der Reihe nach abgeschlossen. Nur eine hoehere Zahl als deine zuletzt gelegte Region oeffnet diese Auswahl.'
+      : 'Jetzt wird in aufsteigender Zahlenreihenfolge aus dem Markt gezogen. Erst wenn alle fertig sind, geht die Runde weiter.'
     const confirmLabel = isSanctuaryStage
       ? needsSanctuary
         ? 'Refugium bestaetigen'
@@ -1298,9 +1298,11 @@ function App() {
         className="phase-panel phase-draft"
         key={`draft-${activeMatch.round}-${activeMatch.draftStage}-${currentPlayer?.id ?? 'none'}-${activeMatch.draftIndex}`}
       >
-        <div className="phase-copy">
-          <span className="phase-tag">{isSanctuaryStage ? 'Phase 2 · Refugium' : 'Phase 3 · Markt'}</span>
-          <h2>{draftHeadline}</h2>
+        <div className="phase-copy draft-phase-copy">
+          <div className="draft-phase-meta">
+            <span className="phase-tag">{isSanctuaryStage ? 'Phase 2 / Refugium' : 'Phase 3 / Markt'}</span>
+            <span className="draft-turn-pill">{draftLead}</span>
+          </div>
           <p>{draftCopy}</p>
         </div>
 
@@ -1310,10 +1312,10 @@ function App() {
             { step: '2', label: 'Refugium', state: isSanctuaryStage ? 'active' : 'done' },
             { step: '3', label: 'Markt', state: isSanctuaryStage ? 'pending' : 'active' },
           ].map((entry) => (
-            <article className={`draft-sequence-step is-${entry.state}`} key={entry.step}>
-              <span>{entry.step}</span>
+            <div className={`draft-sequence-step is-${entry.state}`} key={entry.step}>
+              <span className="draft-sequence-step-index">{entry.step}</span>
               <strong>{entry.label}</strong>
-            </article>
+            </div>
           ))}
         </div>
 
@@ -1341,7 +1343,11 @@ function App() {
                 : 'In dieser Runde gibt es keinen Marktpick mehr.'}
           </p>
 
-          <div className="card-grid compact-grid draft-focus-grid">
+          <div
+            className={`card-grid compact-grid draft-focus-grid ${isSanctuaryStage ? 'is-sanctuary' : 'is-market'} ${
+              isSanctuaryStage && draftPlayer.pendingSanctuaries.length === 1 ? 'has-single-card' : ''
+            }`}
+          >
             {isSanctuaryStage && draftPlayer.pendingSanctuaries.length === 0 ? (
               <div className="strip-empty">Hier gibt es in Phase 2 nichts auszuwaehlen.</div>
             ) : null}

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" role="img" aria-label="region-53 unique card art">
+  <defs>
+    <linearGradient id="sky-region-53" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#162b45"/><stop offset="0.52" stop-color="#5b164e"/><stop offset="1" stop-color="#090812"/></linearGradient>
+    <linearGradient id="tower-region-53" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#101827"/><stop offset="0.5" stop-color="#5b164e"/><stop offset="1" stop-color="#03060c"/></linearGradient>
+    <radialGradient id="orb-region-53" cx="50%" cy="50%" r="55%"><stop offset="0" stop-color="#fff0a8"/><stop offset="0.42" stop-color="#ff74ee" stop-opacity="0.62"/><stop offset="1" stop-color="#ff74ee" stop-opacity="0"/></radialGradient>
+    <filter id="glow-region-53" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="960" height="420" fill="url(#sky-region-53)"/>
+  <circle cx="752" cy="130" r="54" fill="url(#orb-region-53)" filter="url(#glow-region-53)"/>
+  <circle cx="92" cy="168" r="1.0" fill="#ffffff" opacity="0.22"/><circle cx="175" cy="123" r="1.1" fill="#ffffff" opacity="0.22"/><circle cx="258" cy="115" r="1.1" fill="#ffffff" opacity="0.22"/><circle cx="341" cy="125" r="1.2" fill="#ffffff" opacity="0.22"/><circle cx="424" cy="62" r="1.3" fill="#ffffff" opacity="0.22"/><circle cx="507" cy="45" r="1.4" fill="#ffffff" opacity="0.22"/><circle cx="590" cy="51" r="1.5" fill="#ffffff" opacity="0.22"/><circle cx="673" cy="151" r="1.6" fill="#ffffff" opacity="0.22"/><circle cx="756" cy="50" r="1.6" fill="#ffffff" opacity="0.22"/><circle cx="839" cy="180" r="1.7" fill="#ffffff" opacity="0.22"/><circle cx="922" cy="93" r="1.8" fill="#ffffff" opacity="0.22"/><circle cx="93" cy="147" r="1.9" fill="#ffffff" opacity="0.22"/>
+  
+  <polyline points="0,260 0,283 140,294 280,299 420,267 560,286 700,260 840,247 980,276 960,250 960,420 0,420" fill="#050b14" opacity="0.42"/>
+  <polyline points="0,220 0,227 120,242 240,250 360,254 480,217 600,198 720,228 840,243 960,211 960,210 960,420 0,420" fill="#0a1422" opacity="0.48"/>
+  <g opacity="0.9"><rect x="356" y="64" width="24" height="178" rx="4" fill="url(#tower-region-53)"/><rect x="364.64" y="74" width="4.32" height="156" rx="3" fill="#ff74ee" opacity="0.42"/><ellipse cx="368" cy="64" rx="17.28" ry="7" fill="#ffe2fb" opacity="0.74"/></g><g opacity="0.9"><rect x="505" y="138" width="39" height="128" rx="6.5" fill="url(#tower-region-53)"/><rect x="519.04" y="148" width="7.02" height="106" rx="3" fill="#ff74ee" opacity="0.42"/><rect x="500" y="129" width="49" height="9" rx="4" fill="#ffe2fb" opacity="0.66"/></g><g opacity="0.9"><rect x="654" y="139" width="30" height="103" rx="5" fill="url(#tower-region-53)"/><rect x="664.8" y="149" width="5.3999999999999995" height="81" rx="3" fill="#ff74ee" opacity="0.42"/><polygon points="646,139 669,107 692,139" fill="#ffe2fb" opacity="0.82"/></g><g opacity="0.9"><rect x="803" y="176" width="26" height="90" rx="4.333333333333333" fill="url(#tower-region-53)"/><rect x="812.36" y="186" width="4.68" height="68" rx="3" fill="#ff74ee" opacity="0.42"/><ellipse cx="816" cy="176" rx="18.72" ry="7" fill="#ffe2fb" opacity="0.74"/></g>
+  <path d="M0 330 L90 298 L164 326 L258 286 L354 326 L478 292 L612 328 L740 276 L842 322 L960 294 L960 420 L0 420 Z" fill="#1c1230" opacity="0.82"/><path d="M80 320 H884" stroke="#ff74ee" stroke-width="4" opacity="0.38"/>
+  <path d="M0 382 H960" stroke="#ff74ee" stroke-width="2" opacity="0.42"/>
+  <path d="M60 392 C336 350, 604 410, 828 372" fill="none" stroke="#ffe2fb" stroke-width="4" opacity="0.34"/>
+  <text x="28" y="40" fill="#ffe2fb" font-family="monospace" font-size="18" letter-spacing="5" opacity="0.5">53 DROWNED CITY</text>
+</svg>
