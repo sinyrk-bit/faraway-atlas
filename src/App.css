@@ -4662,3 +4662,167 @@
     display: none;
   }
 }
+
+.screen-menu .mode-tile {
+  gap: 0.12rem;
+  min-height: 0;
+}
+
+.screen-menu .mode-tile strong,
+.screen-menu .mode-tile p,
+.screen-menu .field-hint,
+.screen-menu .feature-rail {
+  display: none;
+}
+
+.screen-menu .mode-tile span {
+  font-size: clamp(0.7rem, 1.25vw, 1rem);
+}
+
+.screen-menu .hero-panel {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+}
+
+.draft-stage-copy {
+  display: none;
+}
+
+.card-symbol-only-panel {
+  gap: 0;
+  padding: 0.22rem;
+}
+
+.card-symbol-only-panel .card-symbol-board {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.86fr) minmax(0, 0.86fr);
+  gap: 0.18rem;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.card-symbol-only-panel .card-symbol-main,
+.card-symbol-only-panel .card-symbol-row {
+  min-height: 2.34rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.18rem;
+  padding: 0.18rem;
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 18% 18%, color-mix(in srgb, var(--card-accent) 30%, transparent), transparent 52%),
+    rgba(3, 7, 14, 0.46);
+  border: 1px solid color-mix(in srgb, var(--card-accent) 30%, rgba(255, 255, 255, 0.08));
+}
+
+.card-symbol-only-panel .card-symbol-row {
+  border-top: 1px solid color-mix(in srgb, var(--card-accent) 30%, rgba(255, 255, 255, 0.08));
+}
+
+.card-symbol-only-panel .card-score-badge {
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  font-size: 0.98rem;
+}
+
+.card-symbol-only-panel .card-score-track {
+  justify-content: center;
+  gap: 0.12rem;
+}
+
+.card-symbol-only-panel .symbol-chip.is-compact {
+  min-height: 1.34rem;
+  padding: 0.08rem 0.16rem;
+}
+
+.card-symbol-only-panel .symbol-chip.is-compact .symbol-chip-sigil {
+  width: 1.08rem;
+  height: 1.08rem;
+  font-size: 0.72rem;
+}
+
+.card-symbol-only-panel .symbol-chip-value {
+  font-size: 0.9rem;
+}
+
+.card-symbol-only-panel .card-symbol-empty {
+  min-width: 1.28rem;
+  min-height: 1.28rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 999px;
+  font-size: 0.88rem;
+}
+
+.card-face.is-compact .card-symbol-only-panel,
+.card-face.is-minimal .card-symbol-only-panel {
+  padding: 0.18rem;
+}
+
+.card-face.is-compact .card-symbol-only-panel .card-symbol-board,
+.card-face.is-minimal .card-symbol-only-panel .card-symbol-board {
+  gap: 0.14rem;
+}
+
+.card-face.is-compact .card-symbol-only-panel .card-symbol-main,
+.card-face.is-compact .card-symbol-only-panel .card-symbol-row,
+.card-face.is-minimal .card-symbol-only-panel .card-symbol-main,
+.card-face.is-minimal .card-symbol-only-panel .card-symbol-row {
+  min-height: 2.04rem;
+  padding: 0.14rem;
+}
+
+.card-face.is-compact .card-symbol-only-panel .card-score-badge,
+.card-face.is-minimal .card-symbol-only-panel .card-score-badge {
+  min-width: 1.95rem;
+  min-height: 1.95rem;
+  font-size: 0.88rem;
+}
+
+.card-face.is-compact .card-symbol-only-panel .symbol-chip.is-compact .symbol-chip-sigil,
+.card-face.is-minimal .card-symbol-only-panel .symbol-chip.is-compact .symbol-chip-sigil {
+  width: 0.98rem;
+  height: 0.98rem;
+}
+
+.card-art-stat.is-time .card-art-stat-text {
+  display: none;
+}
+
+.card-art-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.78rem;
+  height: 1.78rem;
+  padding: 0.22rem;
+}
+
+.card-art-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+@media (max-width: 760px), (max-height: 620px) {
+  .screen-menu {
+    padding-bottom: calc(3.4rem + env(safe-area-inset-bottom));
+  }
+
+  .screen-menu .hero-shell {
+    min-height: 0;
+    grid-template-columns: 1fr;
+  }
+
+  .screen-menu .hero-copy {
+    display: none;
+  }
+
+  .screen-menu .stats-row {
+    display: none;
+  }
+}

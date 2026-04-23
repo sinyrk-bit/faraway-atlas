@@ -950,7 +950,7 @@ export function confirmReveal(state: MatchState) {
   next.draftIndex = 0
   next.humanDraftSelection = {}
   next.draftStage = resolveDraftStage(next)
-  next.phase = 'reveal'
+  next.phase = 'draft'
   next.activeHumanPlayerId = undefined
   next.activeDigitEchoes = Array.from(
     new Set(next.players.flatMap((player) => player.tableau.filter((card) => card.meteor).map((card) => card.serial % 10))),
@@ -967,7 +967,7 @@ export function confirmReveal(state: MatchState) {
     )
   })
 
-  return updateScorePreviews(loggedState)
+  return beginDraftPhase(updateScorePreviews(loggedState))
 }
 
 export function setHumanDraftSelection(state: MatchState, selection: DraftSelection): MatchState {

@@ -36,10 +36,10 @@ const iconArt: Record<IconArtKey, string> = {
 }
 
 const biomeSigils: Record<Biome, string> = {
-  river: 'KN',
-  city: 'ST',
-  forest: 'WA',
-  desert: 'WU',
+  river: '≈',
+  city: '■',
+  forest: '▲',
+  desert: '◆',
 }
 
 const iconMeta = {
@@ -307,20 +307,6 @@ export function CardFace({
   const questItems = buildQuestItems(quest)
   const prerequisiteItems = buildPrerequisiteItems(quest?.prerequisite)
   const questPoints = quest?.points ?? 0
-  const toneLabel =
-    card.cardType === 'region'
-      ? biomeMeta[card.biome].short
-      : card.linkedBiome
-        ? `${biomeMeta[card.linkedBiome].short} Refugium`
-        : 'Neutral'
-  const cadenceLabel =
-    card.cardType === 'region'
-      ? card.time === 'night'
-        ? 'Nacht'
-        : 'Tag'
-      : card.rarity === 'rare'
-        ? 'Selten'
-        : 'Basis'
   const artStats: ArtStat[] =
     card.cardType === 'region'
       ? [
@@ -328,7 +314,6 @@ export function CardFace({
           { key: 'biome', label: biomeSigils[card.biome], title: biomeMeta[card.biome].label, className: 'is-biome' },
           {
             key: 'time',
-            label: card.time === 'night' ? 'Nacht' : 'Tag',
             iconSrc: card.time === 'night' ? moonSymbolIcon : sunSymbolIcon,
             title: card.time === 'night' ? 'Nachtkarte' : 'Tageskarte',
             imageClassName: 'card-art-stat-symbol',
@@ -336,16 +321,16 @@ export function CardFace({
           },
         ]
       : [
-          { key: 'sanctuary', label: 'RF', title: 'Refugium', className: 'is-serial' },
+          { key: 'sanctuary', iconSrc: sanctuaryIcon, title: 'Refugium', imageClassName: 'card-art-stat-symbol', className: 'is-serial' },
           {
             key: 'biome',
-            label: card.linkedBiome ? biomeSigils[card.linkedBiome] : 'NE',
+            label: card.linkedBiome ? biomeSigils[card.linkedBiome] : '◇',
             title: card.linkedBiome ? biomeMeta[card.linkedBiome].label : 'Neutral',
             className: 'is-biome',
           },
           {
             key: 'rarity',
-            label: card.rarity === 'rare' ? 'Selten' : 'Basis',
+            label: card.rarity === 'rare' ? '◆◆' : '◆',
             title: card.rarity === 'rare' ? 'Selten' : 'Gewoehnlich',
             className: 'is-time',
           },
@@ -407,52 +392,41 @@ export function CardFace({
               </span>
             ))}
           </div>
-          {'meteor' in card && card.meteor ? <span className="card-art-badge">Meteorspur</span> : null}
+          {'meteor' in card && card.meteor ? (
+            <span className="card-art-badge" title="Meteorspur">
+              <img alt="" className="card-art-stat-symbol" src={meteorIcon} />
+            </span>
+          ) : null}
         </div>
       </div>
 
-      <section className="card-info-panel">
-        <header className="card-header">
-          <div className="card-ribbon-row">
-            <span className="card-color-pill">{toneLabel}</span>
-            <span className={`card-time-pill ${card.cardType === 'region' ? `is-${card.time}` : 'is-sanctuary'}`}>
-              {cadenceLabel}
-            </span>
-          </div>
-          <h3>{card.title}</h3>
-        </header>
-
+      <section className="card-info-panel card-symbol-only-panel" aria-label={card.title}>
         <div className="card-symbol-board">
           <div className="card-symbol-main">
             <span className="card-score-badge">+{questPoints}</span>
-            <div className="card-row-copy">
-              <span>Punkte fuer</span>
-              <div className="card-score-track">
-                {questItems.length > 0 ? (
-                  questItems.map((item) => <SymbolChip compact item={item} key={`${card.id}-quest-${item.key}`} />)
-                ) : (
-                  <span className="card-symbol-empty">Fixwert</span>
-                )}
-              </div>
+            <div className="card-score-track" title="Punkte">
+              {questItems.length > 0 ? (
+                questItems.map((item) => <SymbolChip compact item={item} key={`${card.id}-quest-${item.key}`} />)
+              ) : (
+                <span className="card-symbol-empty">+</span>
+              )}
             </div>
           </div>
           <div className="card-symbol-row is-need" title="Benoetigt">
-            <span>Braucht</span>
             <div className="card-score-track">
               {prerequisiteItems.length > 0 ? (
                 prerequisiteItems.map((item) => <SymbolChip compact item={item} key={`${card.id}-need-${item.key}`} />)
               ) : (
-                <span className="card-symbol-empty">Nichts</span>
+                <span className="card-symbol-empty">0</span>
               )}
             </div>
           </div>
           <div className="card-symbol-row is-gain" title="Gibt">
-            <span>{card.cardType === 'region' ? 'Ertrag' : 'Bonus'}</span>
             <div className="card-score-track">
               {counters.length > 0 ? (
                 counters.map((item) => <SymbolChip compact item={item} key={`${card.id}-counter-${item.key}`} />)
               ) : (
-                <span className="card-symbol-empty">Kein Bonus</span>
+                <span className="card-symbol-empty">0</span>
               )}
             </div>
           </div>
