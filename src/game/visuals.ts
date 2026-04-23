@@ -113,21 +113,12 @@ export function getCardArt(card: PlayCard) {
 export function getCardArtTreatment(card: PlayCard): CardArtTreatment {
   const seed = buildCardVisualSeed(card)
   const src = getCardArt(card)
-  const positionX = 10 + (seed % 76)
-  const positionY = 12 + ((seed >>> 6) % 58)
-  const scale = 1.08 + ((seed >>> 12) % 12) * 0.025
-  const rotate = ((seed >>> 17) % 13) - 6
-  const flip = ((seed >>> 21) & 1) === 0 ? 1 : -1
-  const saturate = 0.94 + ((seed >>> 4) % 9) * 0.07
-  const brightness = 0.9 + ((seed >>> 10) % 7) * 0.04
-  const contrast = 0.96 + ((seed >>> 15) % 5) * 0.06
-  const hueShift = ((seed >>> 22) % 17) - 8
 
   return {
     src,
-    position: `${positionX}% ${positionY}%`,
-    transform: `scale(${(flip * scale).toFixed(3)}, ${scale.toFixed(3)}) rotate(${rotate}deg)`,
-    filter: `saturate(${saturate.toFixed(2)}) brightness(${brightness.toFixed(2)}) contrast(${contrast.toFixed(2)}) hue-rotate(${hueShift}deg)`,
+    position: '50% 50%',
+    transform: 'none',
+    filter: 'saturate(1.04) contrast(1.02)',
     riftX: `${8 + ((seed >>> 3) % 72)}%`,
     riftY: `${8 + ((seed >>> 8) % 28)}%`,
     bloomX: `${64 + ((seed >>> 19) % 24)}%`,
